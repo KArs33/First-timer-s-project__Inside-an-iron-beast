@@ -47,6 +47,89 @@ startGame::startGame(string foeFile, string locFile) {
 	if (!mapList1.empty() && !foeV1.empty()) fillInMap(mapList1, foeV1, 1);
 	// place player at a default starting location (0,0)
 	if (WidthMAPMAX > 0 && HeightMapMax > 0) gameMap[0][0].setIsCurLoc();
+	// run the starting prologue locations (first three in loc.txt)
+	runPrologue();
+}
+
+// Read the first three locations from the loc file (order in file) and force the player
+// to resolve each location's check before continuing. Uses takeAction so behavior
+// is identical to normal location encounters. After passing the third prologue
+// location the player is placed at the map cell that contains the first location.
+void startGame::runPrologue(){
+	ifstream in(m_locFile.empty() ? "loc.txt" : m_locFile);
+	if(!in.is_open()) return;
+	string line; int counter = 0;
+	vector<loc> starts; // store parsed first 3 locations as values
+	while(getline(in, line) && (int)starts.size() < 3){
+		counter++;
+		vector<string> parts; istringstream ss(line); string token;
+		while (getline(ss, token, '|')) parts.push_back(token);
+		if(parts.size() < 1) continue;
+		string name = parts.size() > 0 ? parts[0] : string();
+		string desc = parts.size() > 1 ? parts[1] : string();
+		int options = -1; if(parts.size() > 2) options = safeStoi(parts[2], -1);
+		int zone = -1; if(parts.size() > 3) zone = safeStoi(parts[3], -1);
+		string o1 = parts.size() > 4 ? parts[4] : string();
+		string opS1 = parts.size() > 5 ? parts[5] : string();
+		int opN1 = parts.size() > 6 ? safeStoi(parts[6], 0) : 0;
+		string op1f = parts.size() > 7 ? parts[7] : string();
+		string op1p = parts.size() > 8 ? parts[8] : string();
+		string o2 = parts.size() > 9 ? parts[9] : string();
+		string opS2 = parts.size() > 10 ? parts[10] : string();
+		int opN2 = parts.size() > 11 ? safeStoi(parts[11], 0) : 0;
+		string op2f = parts.size() > 12 ? parts[12] : string();
+		string op2p = parts.size() > 13 ? parts[13] : string();
+		string o3 = parts.size() > 14 ? parts[14] : string();
+		string opS3 = parts.size() > 15 ? parts[15] : string();
+		int opN3 = parts.size() > 16 ? safeStoi(parts[16], 0) : 0;
+		string op3f = parts.size() > 17 ? parts[17] : string();
+		string op3p = parts.size() > 18 ? parts[18] : string();
+		string pop1 = parts.size() > 19 ? parts[19] : string();
+		string fop1 = parts.size() > 20 ? parts[20] : string();
+		string pop2 = parts.size() > 21 ? parts[21] : string();
+		string fop2 = parts.size() > 22 ? parts[22] : string();
+		string pop3 = parts.size() > 23 ? parts[23] : string();
+		string fop3 = parts.size() > 24 ? parts[24] : string();
+		int locid = counter;
+		loc l(name, desc, options, zone, o1, opS1, opN1, op1f, op1p, o2, opS2, opN2, op2f, op2p, o3, opS3, opN3, op3f, op3p, pop1, fop1, pop2, fop2, pop3, fop3, locid);
+		starts.push_back(l);
+	}
+	if(starts.empty()) return;
+
+	// Sequentially require success before moving on
+	for(size_t i=0;i<starts.size();++i){
+		loc &cur = starts[i];
+		// don't attempt infinite loop for 0-option locations
+		if(cur.getOptions() <= 0) continue;
+		while(true){
+			int xpBefore = player.getXp();
+			takeAction(cur, player);
+			int xpAfter = player.getXp();
+			if(xpAfter > xpBefore){
+				// success, move to next
+				break;
+			} else {
+				cout << "You failed the check. You must try the location again." << endl;
+			}
+		}
+	}
+
+	// After passing the third prologue location, place player at the map cell containing the first start location
+	string firstName = starts[0].getName();
+	int fx=-1, fy=-1;
+	for(int x=0;x<WidthMAPMAX;++x){
+		for(int y=0;y<HeightMapMax;++y){
+			loc* lp = gameMap[x][y].getLocObj();
+			if(lp && lp->getName() == firstName){ fx = x; fy = y; break; }
+		}
+		if(fx!=-1) break;
+	}
+	// toggle off any current location
+	for(int x=0;x<WidthMAPMAX;++x) for(int y=0;y<HeightMapMax;++y) if(gameMap[x][y].getIsCurLoc()) gameMap[x][y].setIsCurLoc();
+	if(fx!=-1){ gameMap[fx][fy].setIsCurLoc(); cout<<"Placed player at start of location: "<<firstName<<" ("<<fx<<","<<fy<<")"<<endl; }
+	else { // fallback to (0,0)
+		if(WidthMAPMAX>0 && HeightMapMax>0) gameMap[0][0].setIsCurLoc();
+	}
 }
 
 void startGame::buildMapLists(vector<loc*>& m1, vector<loc*>& m2, vector<loc*>& m3) {
