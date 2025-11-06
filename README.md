@@ -34,3 +34,32 @@ OP#fail is the string that prints when the player fails the test.
 OP#pass is the string that prints when the player passes the test.
 
 pop# stands for Passed OP #; and contains the name of the code that will excecute if the player picks that OP, and passes the test. fop# is the same, but for when they fail
+
+
+---
+
+Quick run & debug notes (Windows / PowerShell)
+
+- Build (from workspace root):
+
+		& "${PWD}\build.bat"
+
+- Run directly in PowerShell (call operator & is required for quoted paths):
+
+		& "${PWD}\build\driver.exe" loc.txt foe.txt
+
+	- Pass the files in this order: loc.txt then foe.txt
+	- If your workspace path contains spaces, the leading `&` is required when the executable path is quoted.
+
+- Debugging in VS Code:
+
+	- Use the "Run driver for IAIB Program" configuration (launch.json) which launches the program in an external console so stdin works.
+	- The preLaunch build task runs `build.bat` automatically; ensure the build succeeds before starting the debugger.
+	- If attaching fails due to permissions, run VS Code as Administrator or run the program manually and use the "Attach to running driver" config.
+
+Troubleshooting
+
+- If input loops or you see repeated "Invalid, re-enter" messages, run the binary directly in PowerShell (example above) to confirm interactive behavior.
+- If the external console doesn't appear when debugging, confirm `externalConsole` is `true` in `.vscode/launch.json` (already configured in this repo).
+
+If you want, I can add a short section with exact VS Code steps and screenshots for attaching the debugger on Windows.

@@ -100,13 +100,27 @@ void startGame::runPrologue(){
 	for(size_t i=0;i<starts.size();++i){
 		loc &cur = starts[i];
 		// don't attempt infinite loop for 0-option locations
-		if(cur.getOptions() <= 0) continue;
+		if(cur.getOptions() <= 0) {
+			cout << "[Prologue] Skipping location '"<<cur.getName()<<"' (no options)." << endl;
+			continue;
+		}
+		cout << "[Prologue] Starting location "<< (i+1) <<" : "<< cur.getName() <<"\n";
+		cout << cur.getDescription() << "\n";
+		// show simple helper info so user knows which option corresponds to the skill check
+		cout << "Options: " << endl;
+		if(cur.getOptions() >= 1) cout << "1) " << cur.getOp1() << " ("<< cur.getOp1Stat() <<" vs "<< cur.getOp1StatNum() <<")"<<endl;
+		if(cur.getOptions() >= 2) cout << "2) " << cur.getOp2() << " ("<< cur.getOp2Stat() <<" vs "<< cur.getOp2StatNum() <<")"<<endl;
+		if(cur.getOptions() >= 3) cout << "3) " << cur.getOp3() << " ("<< cur.getOp3Stat() <<" vs "<< cur.getOp3StatNum() <<")"<<endl;
+		cout << "(Prologue) Player stats: Bd="<<player.getStatBd()<<" Ag="<<player.getStatAg()<<" In="<<player.getStatIn()<<" Gu="<<player.getStatGu()<<" XP="<<player.getXp()<<"\n";
 		while(true){
 			int xpBefore = player.getXp();
+			cout << "Attempting location '"<<cur.getName()<<"' - choose an option and press Enter." << endl;
+			cout.flush();
 			takeAction(cur, player);
 			int xpAfter = player.getXp();
 			if(xpAfter > xpBefore){
 				// success, move to next
+				cout << "[Prologue] Passed location '"<<cur.getName()<<"'"<<endl;
 				break;
 			} else {
 				cout << "You failed the check. You must try the location again." << endl;
@@ -347,13 +361,34 @@ void startGame::takeAction(loc place, Player &you){
 	if (options >= 2) cout << "2) " << place.getOp2() << endl;
 	if (options >= 3) cout << "3) " << place.getOp3() << endl;
 	cout << "Choose option (1-" << options << "): ";
-	int choice = 1; cin >> choice;
-	while (choice < 1 || choice > options) { cout << "Invalid, re-enter: "; cin >> choice; }
+	int choice = 0;
+	// Read user choice with getline and parse to avoid leaving cin in fail state
+	string choiceLine;
+	while (true) {
+		if(!std::getline(cin, choiceLine)){
+			// EOF or input error: default to option 1
+			choice = 1;
+			break;
+		}
+		// trim leading whitespace
+		size_t p = 0; while (p < choiceLine.size() && isspace((unsigned char)choiceLine[p])) ++p;
+		if (p == choiceLine.size()) { cout << "Invalid, re-enter: "; continue; }
+		try {
+			choice = stoi(choiceLine.substr(p));
+		} catch (...) {
+			cout << "Invalid, re-enter: ";
+			continue;
+		}
+		if (choice >= 1 && choice <= options) break;
+		cout << "Invalid, re-enter: ";
+	}
 	string stat; int need = 0; string passMsg, failMsg;
 	if (choice == 1) { stat = place.getOp1Stat(); need = place.getOp1StatNum(); passMsg = place.getOp1pass(); failMsg = place.getOp1fail(); }
 	else if (choice == 2) { stat = place.getOp2Stat(); need = place.getOp2StatNum(); passMsg = place.getOp2pass(); failMsg = place.getOp2fail(); }
 	else { stat = place.getOp3Stat(); need = place.getOp3StatNum(); passMsg = place.getOp3pass(); failMsg = place.getOp3fail(); }
+	int xpBefore = you.getXp();
 	int roll = makeRolls(stat, 0, you);
+	cout << "[DEBUG] need="<<need<<" stat='"<<stat<<"' roll="<<roll<<" xpBefore="<<xpBefore<<"\n";
 	cout << "You roll " << roll << " against needed " << need << " (" << stat << ")" << endl;
 	if (need == 0 || roll >= need) {
 		cout << "Success: " << passMsg << endl;
