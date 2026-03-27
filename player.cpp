@@ -99,8 +99,13 @@ void Player::printItemList(){
 
 void Player::askUseItem(){
 	using std::cout; using std::cin; using std::endl;
+	auto readChar = [&]() -> char {
+		string line;
+		if (!std::getline(cin, line) || line.empty()) return 'E';
+		return std::toupper((unsigned char)line[0]);
+	};
 	cout << "Item menu: (M)edkit, (E)xit\n";
-	char input; cin >> input; input = std::toupper(input);
+	char input = readChar();
 	while (input != 'E'){
 		if (input == 'M'){
 			if (getMeds() > 0){
@@ -109,7 +114,7 @@ void Player::askUseItem(){
 				setHp(getHp() + 10);
 				if (getHp() > getMaxHp()) setHp(getMaxHp());
 				cout << "HP is now " << getHp() << "." << endl;
-				return; // use consumes and exit
+				return;
 			} else {
 				cout << "No medkits available." << endl;
 			}
@@ -117,7 +122,7 @@ void Player::askUseItem(){
 			cout << "Unknown item choice." << endl;
 		}
 		cout << "Item menu: (M)edkit, (E)xit\n";
-		cin >> input; input = std::toupper(input);
+		input = readChar();
 	}
 }
 

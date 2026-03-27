@@ -25,7 +25,7 @@ public:
 	bool getBlank();
 
 	bool getIsCurLoc();
-	void setIsCurLoc();
+	void setIsCurLoc(bool val);
 	bool checkCurLocFoe();
 
 	// return stored location pointer (may be nullptr)

@@ -88,6 +88,8 @@ void mainMenu();
 // movement helpers
 bool findCurLocation(int &outX, int &outY);
 bool movePlayer(const string &dir);
+// sets (x,y) as the one and only current location, clearing all others first
+void setCurLocation(int x, int y);
 
 // partition helper: separate a list of loc* into mapList0..mapList4 by zone
 void partitionLocsByZone(const std::vector<loc*> &allLocs);

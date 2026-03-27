@@ -43,107 +43,61 @@ startGame::startGame(string foeFile, string locFile) {
 	m_foeFile = foeFile;
 	m_locFile = locFile;
 	buildFoeList();
-	buildMapLists(mapList1, mapList2, mapList3);
+	buildMapLists(mapList1, mapList2, mapList3); // populates mapList0..4 via partitionLocsByZone
 	if (!mapList1.empty() && !foeV1.empty()) fillInMap(mapList1, foeV1, 1);
-	// place player at a default starting location (0,0)
-	if (WidthMAPMAX > 0 && HeightMapMax > 0) gameMap[0][0].setIsCurLoc();
-	// run the starting prologue locations (first three in loc.txt)
+	// runPrologue uses mapList0 (populated above) and mapList1 for the post-prologue placement
 	runPrologue();
 }
 
-// Read the first three locations from the loc file (order in file) and force the player
-// to resolve each location's check before continuing. Uses takeAction so behavior
-// is identical to normal location encounters. After passing the third prologue
-// location the player is placed at the map cell that contains the first location.
+// Runs the starting prologue locations (zone-0 entries from loc.txt).
+// buildMapLists must have already been called so mapList0 is populated.
 void startGame::runPrologue(){
-	ifstream in(m_locFile.empty() ? "loc.txt" : m_locFile);
-	if(!in.is_open()) return;
-	string line; int counter = 0;
-	vector<loc> starts; // store parsed first 3 locations as values
-	while(getline(in, line) && (int)starts.size() < 3){
-		counter++;
-		vector<string> parts; istringstream ss(line); string token;
-		while (getline(ss, token, '|')) parts.push_back(token);
-		if(parts.size() < 1) continue;
-		string name = parts.size() > 0 ? parts[0] : string();
-		string desc = parts.size() > 1 ? parts[1] : string();
-		int options = -1; if(parts.size() > 2) options = safeStoi(parts[2], -1);
-		int zone = -1; if(parts.size() > 3) zone = safeStoi(parts[3], -1);
-		string o1 = parts.size() > 4 ? parts[4] : string();
-		string opS1 = parts.size() > 5 ? parts[5] : string();
-		int opN1 = parts.size() > 6 ? safeStoi(parts[6], 0) : 0;
-		string op1f = parts.size() > 7 ? parts[7] : string();
-		string op1p = parts.size() > 8 ? parts[8] : string();
-		string o2 = parts.size() > 9 ? parts[9] : string();
-		string opS2 = parts.size() > 10 ? parts[10] : string();
-		int opN2 = parts.size() > 11 ? safeStoi(parts[11], 0) : 0;
-		string op2f = parts.size() > 12 ? parts[12] : string();
-		string op2p = parts.size() > 13 ? parts[13] : string();
-		string o3 = parts.size() > 14 ? parts[14] : string();
-		string opS3 = parts.size() > 15 ? parts[15] : string();
-		int opN3 = parts.size() > 16 ? safeStoi(parts[16], 0) : 0;
-		string op3f = parts.size() > 17 ? parts[17] : string();
-		string op3p = parts.size() > 18 ? parts[18] : string();
-		string pop1 = parts.size() > 19 ? parts[19] : string();
-		string fop1 = parts.size() > 20 ? parts[20] : string();
-		string pop2 = parts.size() > 21 ? parts[21] : string();
-		string fop2 = parts.size() > 22 ? parts[22] : string();
-		string pop3 = parts.size() > 23 ? parts[23] : string();
-		string fop3 = parts.size() > 24 ? parts[24] : string();
-		int locid = counter;
-		loc l(name, desc, options, zone, o1, opS1, opN1, op1f, op1p, o2, opS2, opN2, op2f, op2p, o3, opS3, opN3, op3f, op3p, pop1, fop1, pop2, fop2, pop3, fop3, locid);
-		starts.push_back(l);
-	}
-	if(starts.empty()) return;
+	if (mapList0.empty()) return;
 
-	// Sequentially require success before moving on
-	for(size_t i=0;i<starts.size();++i){
-		loc &cur = starts[i];
-		// don't attempt infinite loop for 0-option locations
-		if(cur.getOptions() <= 0) {
-			cout << "[Prologue] Skipping location '"<<cur.getName()<<"' (no options)." << endl;
+	// Use at most the first 3 zone-0 locations as prologue stops
+	int count = (int)mapList0.size() < 3 ? (int)mapList0.size() : 3;
+
+	for (int i = 0; i < count; ++i) {
+		loc &cur = *mapList0[i];
+		if (cur.getOptions() <= 0) {
+			cout << "[Prologue] Skipping '" << cur.getName() << "' (no options).\n";
 			continue;
 		}
-		cout << "[Prologue] Starting location "<< (i+1) <<" : "<< cur.getName() <<"\n";
+		cout << "\n[Prologue " << (i + 1) << "] " << cur.getName() << "\n";
 		cout << cur.getDescription() << "\n";
-		// show simple helper info so user knows which option corresponds to the skill check
-		cout << "Options: " << endl;
-		if(cur.getOptions() >= 1) cout << "1) " << cur.getOp1() << " ("<< cur.getOp1Stat() <<" vs "<< cur.getOp1StatNum() <<")"<<endl;
-		if(cur.getOptions() >= 2) cout << "2) " << cur.getOp2() << " ("<< cur.getOp2Stat() <<" vs "<< cur.getOp2StatNum() <<")"<<endl;
-		if(cur.getOptions() >= 3) cout << "3) " << cur.getOp3() << " ("<< cur.getOp3Stat() <<" vs "<< cur.getOp3StatNum() <<")"<<endl;
-		cout << "(Prologue) Player stats: Bd="<<player.getStatBd()<<" Ag="<<player.getStatAg()<<" In="<<player.getStatIn()<<" Gu="<<player.getStatGu()<<" XP="<<player.getXp()<<"\n";
-		while(true){
+		if (cur.getOptions() >= 1) cout << "1) " << cur.getOp1() << " (" << cur.getOp1Stat() << " vs " << cur.getOp1StatNum() << ")\n";
+		if (cur.getOptions() >= 2) cout << "2) " << cur.getOp2() << " (" << cur.getOp2Stat() << " vs " << cur.getOp2StatNum() << ")\n";
+		if (cur.getOptions() >= 3) cout << "3) " << cur.getOp3() << " (" << cur.getOp3Stat() << " vs " << cur.getOp3StatNum() << ")\n";
+		cout << "Player stats — Bd:" << player.getStatBd() << " Ag:" << player.getStatAg()
+		     << " In:" << player.getStatIn() << " Gu:" << player.getStatGu() << "\n";
+
+		while (true) {
 			int xpBefore = player.getXp();
-			cout << "Attempting location '"<<cur.getName()<<"' - choose an option and press Enter." << endl;
-			cout.flush();
 			takeAction(cur, player);
-			int xpAfter = player.getXp();
-			if(xpAfter > xpBefore){
-				// success, move to next
-				cout << "[Prologue] Passed location '"<<cur.getName()<<"'"<<endl;
+			if (player.getXp() > xpBefore) {
+				cout << "[Prologue] Passed '" << cur.getName() << "'.\n";
 				break;
-			} else {
-				cout << "You failed the check. You must try the location again." << endl;
+			}
+			cout << "You failed the check. Try again.\n";
+		}
+	}
+
+	// Place the player at the map cell holding the first zone-1 location (start of main game)
+	if (!mapList1.empty()) {
+		string firstName = mapList1[0]->getName();
+		for (int x = 0; x < WidthMAPMAX; ++x) {
+			for (int y = 0; y < HeightMapMax; ++y) {
+				loc* lp = gameMap[x][y].getLocObj();
+				if (lp && lp->getName() == firstName) {
+					setCurLocation(x, y);
+					cout << "Placed player at '" << firstName << "' (" << x << "," << y << ").\n";
+					return;
+				}
 			}
 		}
 	}
-
-	// After passing the third prologue location, place player at the map cell containing the first start location
-	string firstName = starts[0].getName();
-	int fx=-1, fy=-1;
-	for(int x=0;x<WidthMAPMAX;++x){
-		for(int y=0;y<HeightMapMax;++y){
-			loc* lp = gameMap[x][y].getLocObj();
-			if(lp && lp->getName() == firstName){ fx = x; fy = y; break; }
-		}
-		if(fx!=-1) break;
-	}
-	// toggle off any current location
-	for(int x=0;x<WidthMAPMAX;++x) for(int y=0;y<HeightMapMax;++y) if(gameMap[x][y].getIsCurLoc()) gameMap[x][y].setIsCurLoc();
-	if(fx!=-1){ gameMap[fx][fy].setIsCurLoc(); cout<<"Placed player at start of location: "<<firstName<<" ("<<fx<<","<<fy<<")"<<endl; }
-	else { // fallback to (0,0)
-		if(WidthMAPMAX>0 && HeightMapMax>0) gameMap[0][0].setIsCurLoc();
-	}
+	// Fallback: put the player at (0,0)
+	setCurLocation(0, 0);
 }
 
 void startGame::buildMapLists(vector<loc*>& m1, vector<loc*>& m2, vector<loc*>& m3) {
@@ -154,15 +108,46 @@ void startGame::buildMapLists(vector<loc*>& m1, vector<loc*>& m2, vector<loc*>& 
 	while (getline(in, line)) {
 		counter++;
 		vector<string> parts; istringstream ss(line); string token;
-		while (getline(ss, token, '|')) parts.push_back(fixEscapedQuotes(token));
-	if (parts.size() < 4) continue;
-	string name = parts[0];
-	string desc = parts.size() > 1 ? parts[1] : string();
-	int options = -1;
-	int zone = -1;
-	if (parts.size() > 2) options = safeStoi(parts[2], -1);
-	if (parts.size() > 3) zone = safeStoi(parts[3], -1);
-		loc* l = new loc(name, desc, options, zone, "", "", 0, "", "", "", "", 0, "", "", "", "", 0, "", "", "", "", "", "", "", "", counter);
+		while (getline(ss, token, '|')) parts.push_back(token);
+
+		// loc.txt column order (tab-separated in source, stored as | here):
+		// 0:Name | 1:Desc | 2:options | 3:ZONE
+		// 4:OP1  | 5:OP1STAT | 6:OP1NUM | 7:OP1FAIL | 8:OP1PASS
+		// 9:OP2  | 10:OP2STAT | 11:OP2NUM | 12:OP2FAIL | 13:OP2PASS
+		// 14:OP3 | 15:OP3STAT | 16:OP3NUM | 17:OP3FAIL | 18:OP3PASS
+		// 19:pop1 | 20:fop1 | 21:pop2 | 22:fop2 | 23:pop3 | 24:fop3
+		if (parts.size() < 4) continue;
+		string name    =                              parts[0];
+		string desc    =                              parts[1];
+		int    options = safeStoi(                   parts[2], 0);
+		int    zone    = safeStoi(                   parts[3], -1);
+		string o1      = parts.size() > 4  ?          parts[4]       : string();
+		string opS1    = parts.size() > 5  ?          parts[5]       : string();
+		int    opN1    = parts.size() > 6  ? safeStoi(parts[6],  0)  : 0;
+		string op1f    = parts.size() > 7  ?          parts[7]       : string();
+		string op1p    = parts.size() > 8  ?          parts[8]       : string();
+		string o2      = parts.size() > 9  ?          parts[9]       : string();
+		string opS2    = parts.size() > 10 ?          parts[10]      : string();
+		int    opN2    = parts.size() > 11 ? safeStoi(parts[11], 0)  : 0;
+		string op2f    = parts.size() > 12 ?          parts[12]      : string();
+		string op2p    = parts.size() > 13 ?          parts[13]      : string();
+		string o3      = parts.size() > 14 ?          parts[14]      : string();
+		string opS3    = parts.size() > 15 ?          parts[15]      : string();
+		int    opN3    = parts.size() > 16 ? safeStoi(parts[16], 0)  : 0;
+		string op3f    = parts.size() > 17 ?          parts[17]      : string();
+		string op3p    = parts.size() > 18 ?          parts[18]      : string();
+		string pop1    = parts.size() > 19 ?          parts[19]      : string();
+		string fop1    = parts.size() > 20 ?          parts[20]      : string();
+		string pop2    = parts.size() > 21 ?          parts[21]      : string();
+		string fop2    = parts.size() > 22 ?          parts[22]      : string();
+		string pop3    = parts.size() > 23 ?          parts[23]      : string();
+		string fop3    = parts.size() > 24 ?          parts[24]      : string();
+
+		loc* l = new loc(name, desc, options, zone,
+		                 o1, opS1, opN1, op1f, op1p,
+		                 o2, opS2, opN2, op2f, op2p,
+		                 o3, opS3, opN3, op3f, op3p,
+		                 pop1, fop1, pop2, fop2, pop3, fop3, counter);
 		all.push_back(l);
 	}
 	partitionLocsByZone(all);
@@ -194,20 +179,27 @@ void startGame::partitionLocsByZone(const std::vector<loc*> &allLocs){
 void startGame::buildFoeList(){
 	ifstream in(m_foeFile.empty() ? "foe.txt" : m_foeFile);
 	if (!in.is_open()) return;
-	string line; int counter = 0;
+	string line;
 	while (getline(in, line)) {
-		counter++;
 		vector<string> parts; istringstream ss(line); string tok;
 		while (getline(ss, tok, '|')) parts.push_back(tok);
-	if (parts.size() < 2) continue;
-	string name = parts[0];
-	int zone = -1;
-	int power = 0;
-	if (parts.size() > 1) zone = safeStoi(parts[1], -1);
-	if (parts.size() > 2) power = safeStoi(parts[2], 0);
-	string desc = parts.size() > 3 ? parts[3] : string();
-		Foe f(name, power, desc, zone, 0, false, false, 0, "");
-		if (zone == 1) foeV1.push_back(f);
+
+		// foe.txt column order:
+		// 0:NAME | 1:ZONE | 2:DESC | 3:POW | 4:shield | 5:uniqueAI | 6:reward | 7:pursuit | 8:rewardCode | 9:defeatMsg
+		if (parts.size() < 2) continue;
+		string name    =                              parts[0];
+		int    zone    = parts.size() > 1 ? safeStoi(parts[1], -1)  : -1;
+		string desc    = parts.size() > 2 ?           parts[2]       : string();
+		int    power   = parts.size() > 3 ? safeStoi(parts[3], 0)   : 0;
+		int    shield  = parts.size() > 4 ? safeStoi(parts[4], 0)   : 0;
+		bool   uAI     = parts.size() > 5 && parts[5] != "NULL" && !parts[5].empty();
+		bool   reward  = parts.size() > 6 && parts[6] != "NULL" && !parts[6].empty();
+		int    pursuit = parts.size() > 7 ? safeStoi(parts[7], 0)   : 0;
+		// parts[8] is the reward code — stored but not yet consumed by this class
+		string defeat  = parts.size() > 9 ?           parts[9]       : string();
+
+		Foe f(name, power, desc, zone, shield, uAI, reward, pursuit, defeat);
+		if      (zone == 1) foeV1.push_back(f);
 		else if (zone == 2) foeV2.push_back(f);
 		else if (zone == 3) foeV3.push_back(f);
 		else if (zone == 4) foeV4.push_back(f);
@@ -294,14 +286,14 @@ void startGame::mapPrint(){
 
 void startGame::mainMenu(){
 	cout << "Welcome to the main menu. Enter commands: m=map, i=info, o=outside, t=test loc, q=quit" << endl;
-	// Debug breakpoint helper: set a breakpoint on the next line to stop when main menu is reached
-	volatile int MAINMENU_BREAK = 0; // <-- set breakpoint here if you want
-	cout << "Reached mainMenu breakpoint marker. Press Enter to continue..." << endl;
-	std::cin.get();
 	string cmd;
 	while (true) {
 		cout << "main> ";
-		if (!(cin >> cmd)) break;
+		if (!std::getline(cin, cmd)) break;
+		// trim leading whitespace
+		size_t p = 0; while (p < cmd.size() && isspace((unsigned char)cmd[p])) ++p;
+		cmd = cmd.substr(p);
+		if (cmd.empty()) continue;
 		if (cmd == "m") { mapPrint(); }
 		else if (cmd == "i") { player.printPlayerInfo(); }
 		else if (cmd == "o") { outSide(); }
@@ -316,6 +308,13 @@ void startGame::mainMenu(){
 		}
 		else { cout << "Unknown command. Valid: m i o t xp q n s e w nw ne sw se" << endl; }
 	}
+}
+
+void startGame::setCurLocation(int x, int y){
+	for (int i = 0; i < WidthMAPMAX; ++i)
+		for (int j = 0; j < HeightMapMax; ++j)
+			gameMap[i][j].setIsCurLoc(false);
+	gameMap[x][y].setIsCurLoc(true);
 }
 
 bool startGame::findCurLocation(int &outX, int &outY){
@@ -341,8 +340,7 @@ bool startGame::movePlayer(const string &dir){
 	if(nx<0||ny<0||nx>=WidthMAPMAX||ny>=HeightMapMax) return false;
 	if(gameMap[nx][ny].getBlank()) return false;
 	// move marker
-	gameMap[x][y].setIsCurLoc(); // toggle off
-	gameMap[nx][ny].setIsCurLoc(); // toggle on
+	setCurLocation(nx, ny);
 	cout << "You move "<<dir<<" to ("<<nx<<","<<ny<<")"<<endl;
 	// if location exists, run its action
 	if(gameMap[nx][ny].getLoc()){
@@ -508,7 +506,10 @@ void startGame::startCombat(Foe &foe){
 	while (this->player.getHp() > 0 && foe.getAlive()) {
 		cout << "Your HP: " << this->player.getHp() << " | Foe: " << (foe.getAlive() ? "alive" : "dead") << "\n";
 		cout << "Choose action: (a)ttack, (f)lee, (u)se item: ";
-		char action = 'a'; cin >> action; action = tolower(action);
+		string actionLine;
+		char action = 'a';
+		if (std::getline(cin, actionLine) && !actionLine.empty())
+			action = tolower((unsigned char)actionLine[0]);
 		int result = this->player.checkInputCombat(action, foe);
 		if (result == 0) { cout << "Unknown action." << endl; continue; }
 		if (result == 2) { cout << "You fled the combat." << endl; return; }
