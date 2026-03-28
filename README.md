@@ -53,9 +53,11 @@ Quick run & debug notes (Windows / PowerShell)
 
 - Debugging in VS Code:
 
-	- Use the "Run driver for IAIB Program" configuration (launch.json) which launches the program in an external console so stdin works.
-	- The preLaunch build task runs `build.bat` automatically; ensure the build succeeds before starting the debugger.
-	- If attaching fails due to permissions, run VS Code as Administrator or run the program manually and use the "Attach to running driver" config.
+	- This repo expects a MinGW-w64 toolchain on Windows.
+	- Make sure both `g++` and `gdb` are available on your `PATH` so the build task and debugger can start from VS Code.
+	- Use the "Run IAIB Program (MinGW-w64)" configuration in Run and Debug. It launches the game in an external console so stdin works.
+	- Press `F5` to build with the `build IAIB Debug` task, then launch `build\driver.exe` with `loc.txt` and `foe.txt`.
+	- If attaching fails due to permissions, run VS Code as Administrator or run the program manually and use the "Attach to running IAIB Program (MinGW-w64)" config.
 
 Troubleshooting
 
