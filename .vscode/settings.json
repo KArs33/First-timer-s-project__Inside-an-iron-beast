@@ -81,5 +81,6 @@
         "Urbanae",
         "urbnae",
         "Vigilis"
-    ]
+    ],
+    "C_Cpp.errorSquiggles": "enabled"
 }

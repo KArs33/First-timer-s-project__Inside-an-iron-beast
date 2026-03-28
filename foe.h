@@ -43,10 +43,10 @@ public:
 	void setArmor(int num); 
 	int getArmor();
 
-	/*bool operator == (Foe rhs){
+	bool operator == (Foe rhs){
 		if (rhs.getName()==this->getName())return true;
 		else return false;
-	}*/
+	}
 
 private:
 	string defeat="";
