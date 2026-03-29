@@ -300,7 +300,17 @@ void startGame::mainMenu(){
 			else cout << "No locations loaded for testing." << endl;
 		}
 		else if (cmd == "q") { cout << "Exiting main menu." << endl; break; }
-		else if (cmd == "xp") { cout << "XP: " << player.getXp() << endl; }
+		else if (cmd == "xp") { 
+			cout << "XP: " << player.getXp() << endl; 
+			if(player.getXp()>=5){
+				string answer;
+				while(answer !="y" && answer !="n" && answer !="Y" && answer !="N"){
+					cout <<"Would you like to level up? Y/N? ";
+					getline(cin, answer);
+				}
+				if(answer=="y") player.levelUp();
+			}
+		}
 		else if (cmd == "n" || cmd == "s" || cmd == "e" || cmd == "w" || cmd == "nw" || cmd == "ne" || cmd == "sw" || cmd == "se"){
 			if(!movePlayer(cmd)) cout << "You cannot move that way." << endl;
 		}
