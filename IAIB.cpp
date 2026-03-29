@@ -89,13 +89,15 @@ void startGame::runPrologue(){
 				if (lp && lp->getName() == firstName) {
 					setCurLocation(x, y);
 					cout << "Placed player at '" << firstName << "' (" << x << "," << y << ").\n";
+					mainMenu();
 					return;
 				}
 			}
 		}
 	}
 	// Fallback: put the player at (0,0)
-	setCurLocation(0, 0);
+	cout<<"ERROR, runPrologue() error" <<endl;
+	setCurLocation(0, 0); mainMenu();
 }
 
 void startGame::buildMapLists(vector<loc*>& m1, vector<loc*>& m2, vector<loc*>& m3) {

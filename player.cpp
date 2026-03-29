@@ -25,7 +25,7 @@ bool Player::levelUp(){
 			case 3:
 				setStatGu(statGu+1); choice = "Guile";
 				break;
-				
+
 			case 4:
 				setStatIn(statIn+1); choice = "Inteligence";
 				break;		
@@ -33,6 +33,9 @@ bool Player::levelUp(){
 				cout << "Some error occured in Player::levelUp" <<endl;
 				break;
 			}
+			//purge the cin of newline
+			std::cin.ignore(10000, '\n');
+
 		hp = hp+5; if(hp>maxHp) hp=maxHp;
 		cout << "You gained a level! " << choice << "increased, HP restored." << endl;
 		return true;
