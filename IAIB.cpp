@@ -63,22 +63,20 @@ void startGame::runPrologue(){
 			cout << "[Prologue] Skipping '" << cur.getName() << "' (no options).\n";
 			continue;
 		}
-		cout << "\n[Prologue " << (i + 1) << "] " << cur.getName() << "\n";
-		cout << cur.getDescription() << "\n";
-		if (cur.getOptions() >= 1) cout << "1) " << cur.getOp1() << " (" << cur.getOp1Stat() << " vs " << cur.getOp1StatNum() << ")\n";
-		if (cur.getOptions() >= 2) cout << "2) " << cur.getOp2() << " (" << cur.getOp2Stat() << " vs " << cur.getOp2StatNum() << ")\n";
-		if (cur.getOptions() >= 3) cout << "3) " << cur.getOp3() << " (" << cur.getOp3Stat() << " vs " << cur.getOp3StatNum() << ")\n";
+		cout << "\n[Prologue " << (i + 1) << "]\n";
 		cout << "Player stats — Bd:" << player.getStatBd() << " Ag:" << player.getStatAg()
 		     << " In:" << player.getStatIn() << " Gu:" << player.getStatGu() << "\n";
 
+		bool showLocationText = true;
 		while (true) {
 			int xpBefore = player.getXp();
-			takeAction(cur, player);
+			takeAction(cur, player, showLocationText);
 			if (player.getXp() > xpBefore) {
 				cout << "[Prologue] Passed '" << cur.getName() << "'.\n";
 				break;
 			}
 			cout << "You failed the check. Try again.\n";
+			showLocationText = false;
 		}
 	}
 
@@ -350,11 +348,13 @@ bool startGame::movePlayer(const string &dir){
 	return true;
 }
 
-void startGame::takeAction(loc place, Player &you){
-	cout << "Location: " << place.getName() << "\n" << place.getDescription() << endl;
+void startGame::takeAction(loc place, Player &you, bool showLocationText){
+	if (showLocationText) {
+		cout << "Location: " << place.getName() << "\n" << place.getDescription() << endl;
+	}
 	int options = place.getOptions();
 	if (options <= 0) { cout << "Nothing to do here." << endl; return; }
-	cout << "Options:" << endl;
+	if (showLocationText) cout << "Options:" << endl;
 	if (options >= 1) cout << "1) " << place.getOp1() << endl;
 	if (options >= 2) cout << "2) " << place.getOp2() << endl;
 	if (options >= 3) cout << "3) " << place.getOp3() << endl;

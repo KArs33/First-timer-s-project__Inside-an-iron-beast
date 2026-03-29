@@ -70,7 +70,7 @@ void buildFoeList();
 //void placeFoes(vector<foe> foeV3, vector<foe> foeV2, vector<foe> foeV1); //used to read the foe.txt file, organize the foes into 3 vectors, and insert them into the map
 
 //this function gets called when the player must make a choice at a location
-void takeAction(loc place, Player &you);
+void takeAction(loc place, Player &you, bool showLocationText = true);
 
 //outputs a number using makeRoll
 int makeRolls(string stat, int mod, Player you);
