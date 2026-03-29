@@ -1,17 +1,39 @@
 #include "player.h"
 #include <iostream>
 #include <cctype>
+#include <string>
 // Keep most methods inline in header; implement the remaining getters/accessors declared in the header
 int Player::getChoiceLevel(){ return 5; }
 bool Player::levelUp(){
-	// simple level up: every 5 xp you gain +1 to Bd and Ag and heal to new max HP
 	if (xp >= 5) {
 		xp -= 5;
-		statBd += 1;
-		statAg += 1;
-		maxHp += 5;
-		hp = maxHp;
-		std::cout << "You gained a level! Bd and Ag increased, HP restored." << std::endl;
+		std::cout << "XP -5. You're new total is " << getXp() <<"." <<std::endl;
+		cout << "What attribute would you like to raise?" <<endl<<
+			"(enter 1 for Body, 2 for Agility, 3 for Guile, or 4 for In): ";
+		int cmd; string choice;
+		while(cmd < 1 || cmd >4){
+			cin >> cmd;
+		}
+		switch (cmd){
+			case 1:
+				setStatBd(statBd+1); choice = "Body";
+				break;
+			case 2:
+				setStatAg(statAg+1); choice = "Agility";			
+				break;
+			case 3:
+				setStatIn(statIn+1); choice = "Inteligence";
+				break;
+			case 4:
+				setStatGu(statGu+1); choice = "Guile";
+				break;
+		
+			default:
+				cout << "Some error occured in Player::levelUp" <<endl;
+				break;
+			}
+		hp = hp+5; if(hp>maxHp) hp=maxHp;
+		cout << "You gained a level! " << choice << "increased, HP restored." << endl;
 		return true;
 	}
 	return false;
