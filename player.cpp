@@ -3,14 +3,14 @@
 #include <cctype>
 #include <string>
 // Keep most methods inline in header; implement the remaining getters/accessors declared in the header
-int Player::getChoiceLevel(){ return 5; }
+int Player::getChoiceLevel(){ return 5; } //what was the point of this?
 bool Player::levelUp(){
 	if (xp >= 5) {
 		xp -= 5;
 		std::cout << "XP -5. You're new total is " << getXp() <<"." <<std::endl;
 		cout << "What attribute would you like to raise?" <<endl<<
 			"(enter 1 for Body, 2 for Agility, 3 for Guile, or 4 for In): ";
-		int cmd; string choice;
+		int cmd=0; string choice;
 		while(cmd < 1 || cmd >4){
 			cin >> cmd;
 		}
@@ -21,13 +21,14 @@ bool Player::levelUp(){
 			case 2:
 				setStatAg(statAg+1); choice = "Agility";			
 				break;
+
 			case 3:
-				setStatIn(statIn+1); choice = "Inteligence";
-				break;
-			case 4:
 				setStatGu(statGu+1); choice = "Guile";
 				break;
-		
+				
+			case 4:
+				setStatIn(statIn+1); choice = "Inteligence";
+				break;		
 			default:
 				cout << "Some error occured in Player::levelUp" <<endl;
 				break;
