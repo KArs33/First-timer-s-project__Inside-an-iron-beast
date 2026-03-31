@@ -9,24 +9,25 @@ bool Player::levelUp(){
 		xp -= 5;
 		std::cout << "XP -5. You're new total is " << getXp() <<"." <<std::endl;
 		cout << "What attribute would you like to raise?" <<endl<<
-			"(enter 1 for Body, 2 for Agility, 3 for Guile, or 4 for In): ";
-		int cmd=0; string choice;
-		while(cmd < 1 || cmd >4){
-			cin >> cmd;
+			"(enter b for Body, a for Agility, g for Guile, or i for In): ";
+		char cmd='p'; string choice;
+		while(cmd != 'b' || cmd != 'a' ||cmd != 'g' ||cmd != 'i' ){
+			string command="";
+			getline(cin, command); cmd= tolower(command[0]); 
 		}
 		switch (cmd){
-			case 1:
+			case 'b':
 				setStatBd(statBd+1); choice = "Body";
 				break;
-			case 2:
+			case 'a':
 				setStatAg(statAg+1); choice = "Agility";			
 				break;
 
-			case 3:
+			case 'g':
 				setStatGu(statGu+1); choice = "Guile";
 				break;
 
-			case 4:
+			case 'i':
 				setStatIn(statIn+1); choice = "Inteligence";
 				break;		
 			default:
@@ -50,8 +51,8 @@ int Player::checkInputCombat(char input, Foe &thisFoe){
 		int attack = statBd; // simple single-value attack
 		bool killed = thisFoe.clash(*this, attack);
 		if (killed) {
-			xp += 2;
-			std::cout << "You defeated the foe and gained 2 XP." << std::endl;
+			xp += 3;
+			std::cout << "You defeated the foe and gained 3 XP." << std::endl;
 			return 3; // foe killed
 		}
 		return 1; // action processed
