@@ -3,7 +3,7 @@
 #include <cctype>
 #include <string>
 // Keep most methods inline in header; implement the remaining getters/accessors declared in the header
-int Player::getChoiceLevel(){ return 5; } //what was the point of this?
+//int Player::getChoiceLevel(){ return 5; } //what was the point of this?
 bool Player::levelUp(){
 	if (xp >= 5) {
 		xp -= 5;
