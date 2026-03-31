@@ -87,5 +87,11 @@ private:
 	int javelin=0; int meds=0;
 	int xp=0;
 	int hasGernade=0;
+	bool showBullets = false;
+	bool showEnergyPacks = false;
+	bool showMedkits = false;
+	bool showJavelins = false;
+	bool showShieldRelic = false;
+	bool showGrenades = false;
 };
 #endif

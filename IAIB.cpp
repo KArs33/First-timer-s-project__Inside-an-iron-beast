@@ -167,9 +167,8 @@ void startGame::partitionLocsByZone(const std::vector<loc*> &allLocs){
 			default: delete l; break; // unknown zone, free it
 		}
 	}
-	// shuffle each zone list
+	// Keep prologue locations in file order; shuffle the later zones.
 	std::random_device rd; std::mt19937 g(rd());
-	shuffle(mapList0.begin(), mapList0.end(), g);
 	shuffle(mapList1.begin(), mapList1.end(), g);
 	shuffle(mapList2.begin(), mapList2.end(), g);
 	shuffle(mapList3.begin(), mapList3.end(), g);

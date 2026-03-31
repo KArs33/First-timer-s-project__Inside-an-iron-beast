@@ -81,14 +81,14 @@ bool Player::getHasGrenade(){ return (hasGernade != 0); }
 
 // Setters now implemented
 void Player::setFood(int num){ food = num; }
-void Player::setHasBullet(int num){ hasBullet = num; }
-void Player::setHasEnergyPack(int num){ hasEnergyPack = num; }
+void Player::setHasBullet(int num){ hasBullet = num; showBullets = true; }
+void Player::setHasEnergyPack(int num){ hasEnergyPack = num; showEnergyPacks = true; }
 void Player::setHasTool1(){ hasTool1 = true; }
 void Player::setHasTool2(){ /* placeholder: enable tool2 */ }
-void Player::setJavelin(int num){ javelin = num; }
-void Player::setHasGrenade(int has){ hasGernade = has; }
-void Player::setMeds(int num){ meds = num; }
-void Player::setShieldRelic(int num){ shieldRelic = num; }
+void Player::setJavelin(int num){ javelin = num; showJavelins = true; }
+void Player::setHasGrenade(int has){ hasGernade = has; showGrenades = true; }
+void Player::setMeds(int num){ meds = num; showMedkits = true; }
+void Player::setShieldRelic(int num){ shieldRelic = num; showShieldRelic = true; }
 
 // Player UI implementations
 void Player::printDefaultCombatInfo(){
@@ -116,11 +116,32 @@ void Player::printPlayerInfo(){
 void Player::printItemList(){
 	using std::cout; using std::endl;
 	cout << "Items:\n";
-	cout << " - Bullets: " << hasBullet << "\n";
-	cout << " - Energy Packs: " << hasEnergyPack << "\n";
-	cout << " - Medkits: " << meds << "\n";
-	cout << " - Javelins: " << javelin << "\n";
-	cout << " - Shield relic charges: " << shieldRelic << "\n";
+	bool showedAny = false;
+	if (showBullets) {
+		cout << " - Bullets: " << hasBullet << "\n";
+		showedAny = true;
+	}
+	if (showEnergyPacks) {
+		cout << " - Energy Packs: " << hasEnergyPack << "\n";
+		showedAny = true;
+	}
+	if (showMedkits) {
+		cout << " - Medkits: " << meds << "\n";
+		showedAny = true;
+	}
+	if (showJavelins) {
+		cout << " - Javelins: " << javelin << "\n";
+		showedAny = true;
+	}
+	if (showShieldRelic) {
+		cout << " - Shield relic charges: " << shieldRelic << "\n";
+		showedAny = true;
+	}
+	if (showGrenades) {
+		cout << " - Grenades: " << hasGernade << "\n";
+		showedAny = true;
+	}
+	if (!showedAny) cout << " - None yet\n";
 }
 
 void Player::askUseItem(){
@@ -151,4 +172,3 @@ void Player::askUseItem(){
 		input = readChar();
 	}
 }
-
