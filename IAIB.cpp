@@ -397,7 +397,7 @@ void startGame::takeAction(loc place, Player &you, bool showLocationText){
 	else { stat = place.getOp3Stat(); need = place.getOp3StatNum(); passMsg = place.getOp3pass(); failMsg = place.getOp3fail(); }
 	int xpBefore = you.getXp();
 	int roll = makeRolls(stat, 0, you);
-	cout << "[DEBUG] need="<<need<<" stat='"<<stat<<"' roll="<<roll<<" xpBefore="<<xpBefore<<"\n";
+	//cout << "[DEBUG] need="<<need<<" stat='"<<stat<<"' roll="<<roll<<" xpBefore="<<xpBefore<<"\n";
 	cout << "You roll " << roll << " against needed " << need << " (" << stat << ")" << endl;
 	if (need == 0 || roll >= need) {
 		cout << "Success: " << passMsg << endl;
@@ -426,8 +426,12 @@ void startGame::merchantMeat(Player &you) {
 	you.printTradeInfo();
 	// Minimal safe effect: if player has trade goods, convert to food/xp
 	if (you.getHasTradeGoods()) {
-		cout << "You trade goods for provisions and feel more experienced." << endl;
-		you.setXp(you.getXp() + 2);
+		//SOMETHING NEEDS TO GO HERE, STUB
+
+
+
+
+
 	} else {
 		cout << "You don't have goods to trade." << endl;
 	}
@@ -450,7 +454,7 @@ void startGame::lastFloor(){
 	cout << "End of demo: congratulations on reaching the last floor." << endl;
 }
 
-bool startGame::uniqueSelector(Foe foe){
+bool startGame::uniqueSelector(Foe &foe){
 	if (!foe.getUniqueAI()) return false;
 	string name = foe.getName();
 	if (name.find("Highborn") != string::npos) { this->highBornAi(foe); return true; }
@@ -524,7 +528,7 @@ void startGame::startCombat(Foe &foe){
 		int result = this->player.checkInputCombat(action, foe);
 		if (result == 0) { cout << "Unknown action." << endl; continue; }
 		if (result == 2) { cout << "You fled the combat." << endl; return; }
-		if (result == 3) { cout << "Foe defeated!" << endl; this->player.setXp(this->player.getXp() + 5); break; }
+		if (result == 3) { cout << "Foe defeated!" << endl;  break; }
 
 		// foe's turn (if still alive)
 		if (foe.getAlive()) {

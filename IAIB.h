@@ -102,7 +102,7 @@ void lastFloor(); //still need to make this. It replaces gameMap.
 // run the starting prologue locations (first three in loc.txt)
 void runPrologue();
 //combat functions
-bool uniqueSelector(Foe);
+bool uniqueSelector(&Foe);
 void abruptAssialant(Foe &foe);
 void highBornAi(Foe &foe);
 void wireTrap(Foe &foe);
