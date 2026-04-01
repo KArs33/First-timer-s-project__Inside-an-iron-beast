@@ -1,4 +1,5 @@
 #include "player.h"
+#include "IAIB.h"
 #include <iostream>
 #include <cctype>
 #include <string>
@@ -48,18 +49,19 @@ int Player::checkInputCombat(char input, Foe &thisFoe){
 	// simple handler for combat input: attack (a), flee (f), use item (u)
 	input = std::tolower(static_cast<unsigned char>(input));
 	if (input == 'a') {
-		int attack = statBd; // simple single-value attack
+		int attack = startGame::makeRolls("Bd", (getHasWeapon2() ? 2:0), *this); // simple single-value attack
 		bool killed = thisFoe.clash(*this, attack);
 		if (killed) {
 			xp += 3;
-			std::cout << "You defeated the foe and gained 3 XP." << std::endl;
+			//std::cout << "You defeated the foe and gained 3 XP." << std::endl;
+			std::cout << thisFoe.getMsg() << std::endl;
 			return 3; // foe killed
 		}
 		return 1; // action processed
 	}
 	if (input == 'f') {
-		int fleeRoll = statAg;
-		if (fleeRoll > 6) { std::cout << "You successfully flee." << std::endl; return 2; }
+		int fleeRoll = startGame::makeRolls("Ag", 0, *this);
+		if (fleeRoll > thisFoe.getPersuit()) { std::cout << "You successfully flee." << std::endl; return 2; }
 		std::cout << "You fail to flee." << std::endl; return 1;
 	}
 	if (input == 'u') {

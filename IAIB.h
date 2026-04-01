@@ -73,7 +73,7 @@ void buildFoeList();
 void takeAction(loc place, Player &you, bool showLocationText = true);
 
 //outputs a number using makeRoll
-int makeRolls(string stat, int mod, Player you);
+static int makeRolls(string stat, int mod, Player you);
 //outputs a random 1-6 number
 int makeRoll();
 
