@@ -61,7 +61,8 @@ int Player::checkInputCombat(char input, Foe &thisFoe){
 	}
 	if (input == 'f') {
 		int fleeRoll = startGame::makeRolls("Ag", 0, *this);
-		if (fleeRoll > thisFoe.getPersuit()) { std::cout << "You successfully flee." << std::endl; return 2; }
+		if (fleeRoll > thisFoe.getPersuit()) { std::cout << "You successfully flee." 
+			<< std::endl; return 2; }
 		std::cout << "You fail to flee." << std::endl; return 1;
 	}
 	if (input == 'u') {
@@ -174,4 +175,63 @@ void Player::askUseItem(){
 		cout << "Item menu: (M)edkit, (E)xit\n";
 		input = readChar();
 	}
+}
+
+bool	Player::useJavelin(Foe &foe){
+		//we are assuming a check was already run to see that the user has any javelins to use
+		setJavelin(getJavelin()-1);
+
+		cout<<"You make an opening, and launch a javelin at the foe."<<endl;
+		int attack = startGame::makeRolls("Ag", 2, *this);
+
+		int defense = foe.getPower() + foe.getArmor();
+	if ( attack > defense) {
+		if (foe.getShield() > 0) { foe.setShield(foe.getShield()-1); 
+		std::cout << "Foe's shield absorbed the javelin hit.\n";}
+		else{std::cout << "You strike the foe true and wound them." << std::endl;
+		foe.setAlive(false); return true;}
+	}
+	else std::cout << "The foe dodges the attack the javelin." << std::endl;
+
+	//the javelin has been used. Now the player makes a follow up attack
+	cout<<"You press the advantage created by your javelin, the initiative is yours."<<endl;
+	if(checkInputCombat('a', foe))return true;
+	else return false;
+	}
+bool Player::useGrenade(Foe &foe){
+			//we are assuming a check was already run to see that the user has any gernade to use
+		setHasGrenade(getHasGrenade()-1);
+
+		cout<<"You pull the pin and toss a grenade, while saying a silent pray..."<<endl;
+		int attack = 20;
+		int defense = foe.getPower() + foe.getArmor();
+	if (foe.getShield() > 0) { foe.setShield(foe.getShield()-1); 
+		std::cout << "Foe's shield absorbed the grenade hit.\n";}
+
+	else if ( attack > defense) {
+		{std::cout << "You strike the foe true and wound them." << std::endl;
+		foe.setAlive(false); return true;}
+	}
+	else std::cout << "The foe dodges behind cover and is safe from the blast." << std::endl;
+
+	//the javelin has been used. Now the player makes a follow up attack
+	cout<<"You press the advantage created by your attack, the initiative is yours."<<endl;
+	if(checkInputCombat('a', foe))return true;
+	else return false;
+	}
+
+bool Player::useRifle(Foe &foe){
+	//we assume it has already been checked that the user has bullets
+	setHasBullet(getHasBullet()-1);
+	cout << "You charge the bolt of your rifle and fire away!";
+	int attack = startGame::makeRolls("Ag", 2, *this);
+	int defense = foe.getPower() + foe.getArmor();
+	if ( attack > defense) {
+		if (foe.getShield() > 0) { foe.setShield(foe.getShield()-1); 
+		std::cout << "Foe's shield absorbed the bullet.\n"; return false;}
+		else{std::cout << "You strike the foe true and wound them." << std::endl;
+		foe.setAlive(false); return true;}
+	}
+	else std::cout << "The foe is only grazed by your shoot." << std::endl; return false;
+
 }

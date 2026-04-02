@@ -66,6 +66,9 @@ public:
 	void printTradeInfo();
 	void printPlayerInfo();
 	void printItemList(); void askUseItem();//still need to work on
+	bool useJavelin(Foe &foe);
+	bool useGrenade(Foe &foe);
+	bool useRifle(Foe &foe);
 
 private:
 	int statBd = 2; //body

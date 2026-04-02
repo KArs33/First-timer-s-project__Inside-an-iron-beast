@@ -430,8 +430,6 @@ void startGame::merchantMeat(Player &you) {
 
 
 
-
-
 	} else {
 		cout << "You don't have goods to trade." << endl;
 	}
@@ -519,8 +517,14 @@ void startGame::startCombat(Foe &foe){
 	if (!foe.getAlive()) { cout << "But the foe is already down." << endl; return; }
 	// Interactive turn-based loop: delegate action handling to Player::checkInputCombat
 	while (this->player.getHp() > 0 && foe.getAlive()) {
-		cout << "Your HP: " << this->player.getHp() << " | Foe: " << (foe.getAlive() ? "alive" : "dead") << "\n";
-		cout << "Choose action: (a)ttack, (f)lee, (u)se item: ";
+		cout << "Your HP: " << this->player.getHp() << " | Foe: " << (foe.getAlive() 
+		? "alive" : "dead") << "\n";
+		cout << "Choose action: (a)ttack, (f)lee, ";
+		if(Player::getJavelin()>0){cout<<"throw (j)avelin, "; }
+		if(Player::getHasGrenade()>0){cout<<"throw (g)renade, ";}
+		if(Player::getHasBullet()>0 && Player::getHasWeapon1()){cout<<"fire (r)ifle, ";}
+		
+		cout << "(u)se item: ";
 		string actionLine;
 		char action = 'a';
 		if (std::getline(cin, actionLine) && !actionLine.empty())
