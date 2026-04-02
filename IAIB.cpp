@@ -286,7 +286,7 @@ void startGame::mapPrint(){
 void startGame::mainMenu(){
 	cout << "Welcome to the main menu. Enter commands: m=map, i=info, o=outside, t=test loc, q=quit" << endl;
 	string cmd;
-	while (true) {
+	while (player.getHp()>0) {
 		cout << "main> ";
 		if (!std::getline(cin, cmd)) break;
 		// trim leading whitespace
@@ -317,6 +317,8 @@ void startGame::mainMenu(){
 		}
 		else { cout << "Unknown command. Valid: m i o t xp q n s e w nw ne sw se" << endl; }
 	}
+	//the player is now dead. 
+	cout<<"The world continues to rotate. Only, now it does so without you"; return;
 }
 
 void startGame::setCurLocation(int x, int y){
@@ -521,7 +523,7 @@ void startGame::startCombat(Foe &foe){
 		? "alive" : "dead") << "\n";
 		cout << "Choose action: (a)ttack, (f)lee, ";
 		if(this->player.getJavelin()>0){cout<<"throw (j)avelin, "; }
-		if(this->player.getHasGrenade()>0){cout<<"throw (g)renade, ";}
+		if(this->player.getHasGrenade()){cout<<"throw (g)renade, ";}
 		if(this->player.getHasBullet()>0 && this->player.getHasWeapon1()){cout<<"fire (r)ifle, ";}
 		
 		cout << "(u)se item: ";
@@ -544,6 +546,8 @@ void startGame::startCombat(Foe &foe){
 			if (this->player.getHp() <= 0) { cout << "You have been slain in combat." << endl; break; }
 		}
 	}
+	//if you are here, player is dead
+
 }
 
 void printTutorial(){ cout << "Tutorial (minimal)\n"; }

@@ -50,7 +50,7 @@ public:
 	void setOp3(string x) { op3 = x; };
 	string getOp3() { return op3; };
 	bool operator==( loc rhs){
-		if(rhs.getName()=="The path continues")return false; else return true;
+		if(rhs.getName()!="The path continues")return false; else return true;
 	}
 private:
 	bool explored = 0; //0=unexplored, 1=explored

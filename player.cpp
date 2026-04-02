@@ -12,7 +12,7 @@ bool Player::levelUp(){
 		cout << "What attribute would you like to raise?" <<endl<<
 			"(enter b for Body, a for Agility, g for Guile, or i for In): ";
 		char cmd='p'; string choice;
-		while(cmd != 'b' || cmd != 'a' ||cmd != 'g' ||cmd != 'i' ){
+		while(cmd != 'b' && cmd != 'a' && cmd != 'g' && cmd != 'i' ){
 			string command="";
 			getline(cin, command); cmd= tolower(command[0]); 
 		}
