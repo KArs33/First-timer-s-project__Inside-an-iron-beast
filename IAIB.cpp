@@ -520,9 +520,9 @@ void startGame::startCombat(Foe &foe){
 		cout << "Your HP: " << this->player.getHp() << " | Foe: " << (foe.getAlive() 
 		? "alive" : "dead") << "\n";
 		cout << "Choose action: (a)ttack, (f)lee, ";
-		if(Player::getJavelin()>0){cout<<"throw (j)avelin, "; }
-		if(Player::getHasGrenade()>0){cout<<"throw (g)renade, ";}
-		if(Player::getHasBullet()>0 && Player::getHasWeapon1()){cout<<"fire (r)ifle, ";}
+		if(this->player.getJavelin()>0){cout<<"throw (j)avelin, "; }
+		if(this->player.getHasGrenade()>0){cout<<"throw (g)renade, ";}
+		if(this->player.getHasBullet()>0 && this->player.getHasWeapon1()){cout<<"fire (r)ifle, ";}
 		
 		cout << "(u)se item: ";
 		string actionLine;
