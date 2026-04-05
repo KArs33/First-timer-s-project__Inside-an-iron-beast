@@ -118,8 +118,8 @@ void Player::printDefaultCombatInfo(){
 }
 
 void Player::printTradeInfo(){
-	using std::cout; using std::endl;
-	cout << "Trade goods: " << (hasTradeGoods ? 1 : 0) << "\n";
+	using std::cout;
+	cout << "Trade goods: " << tradeGoods << "\n";
 }
 
 void Player::printPlayerInfo(){

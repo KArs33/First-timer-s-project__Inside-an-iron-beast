@@ -14,6 +14,7 @@
 #include "foe.h"
 #include "player.h"
 #include "map.h"
+#include "merchant.h"
 #include <utility>
 using namespace std;
 
@@ -77,10 +78,15 @@ static int makeRolls(string stat, int mod, Player you);
 //outputs a random 1-6 number
 int makeRoll();
 
-//the merchant functions run when entering a merchant menu
-void merchantMeat(Player &you);
-void merchantZ1(Player &you);
-void merchantZ2(Player &you);
+//the merchant functions run when entering a merchant location.
+// runShop() is the shared do-while loop used by all four merchants.
+// Each merchantX() function sets up its own stock and calls runShop().
+void runShop(const string &merchantName, const string &greeting,
+             const string &farewell, vector<MerchantItem> &items, Player &you);
+void merchantMeat(Player &you);  // Zone-1: provisions
+void merchantZ1  (Player &you);  // Zone-1: salvager
+void merchantZ2  (Player &you);  // Zone-2: dealer
+void merchantZ3  (Player &you);  // Zone-3: trader (stub)
 
 //this should be in a while loop. Will run most of the game
 void mainMenu(); 
@@ -113,6 +119,13 @@ void printTutorial();
 
 
 vector<string> mainMenuVec={"n","s","w","e","nw","sw","ne","se","m","xp","i"};
+
+	// Merchant stock vectors — kept here so stock persists across re-visits.
+	// Populated in the startGame constructor.
+	vector<MerchantItem> stockMeat; // Zone-1 food
+	vector<MerchantItem> stockZ1;   // Zone-1 dealer
+	vector<MerchantItem> stockZ2;   // Zone-2 dealer
+	vector<MerchantItem> stockZ3;   // Zone-3 trader (stub, items TBD)
 private:
 	string m_locFile, m_foeFile;
 };

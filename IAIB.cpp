@@ -6,6 +6,7 @@
 //None save those named Kevin R. Arsenault are allowed to claim ownership over this project. Any may repost this project elsewhere so long as proper citation of origin is given. Any may edit this program so long as the origin of the program remains cited.
 
 #include "IAIB.h"
+#include "merchant.h"
 #include <algorithm>
 #include <random>
 #include <sstream>
@@ -45,6 +46,64 @@ startGame::startGame(string foeFile, string locFile) {
 	buildFoeList();
 	buildMapLists(mapList1, mapList2, mapList3); // populates mapList0..4 via partitionLocsByZone
 	if (!mapList1.empty() && !foeV1.empty()) fillInMap(mapList1, foeV1, 1);
+
+	// ── Merchant stock ──────────────────────────────────────────────────────
+	// MerchantItem(name, description, cost, stock, effectTag, effectAmt)
+	// "effectTag" is read by the applyEffect block inside runShop().
+	// To add a new item: add a MerchantItem here and a matching tag case there.
+
+	stockMeat = {
+		MerchantItem("Dried Rations (3 days)",
+		             "Salt-cured strips of meat packed in waxed cloth. "
+		             "Dense, unpleasant, and exactly what you need.",
+		             1, 4, "food", 3),
+		MerchantItem("Pocket Rations (1 day)",
+		             "A single day's worth of hard bread and jerky.",
+		             1, 6, "food", 1),
+		MerchantItem("Field Medkit",
+		             "Bandages, a needle, and a small vial of antiseptic.",
+		             2, 3, "meds", 1),
+	};
+
+	stockZ1 = {
+		MerchantItem("Scavenged Rifle",
+		             "Dented but functional. Someone left this behind in a hurry.",
+		             3, 1, "weapon1", 1),
+		MerchantItem("Light Armour",
+		             "Padded leather reinforced with salvaged plate strips.",
+		             2, 1, "armor_l", 1),
+		MerchantItem("Javelin (x2)",
+		             "Two balanced throwing spears — useful for opening a gap.",
+		             2, 3, "javelin", 2),
+		MerchantItem("Medkit",
+		             "Same field kit as the butcher sells, marked up for the walk.",
+		             2, 2, "meds", 1),
+	};
+
+	stockZ2 = {
+		MerchantItem("Rifle Ammunition (x5)",
+		             "Five rounds of standard-gauge military ammunition.",
+		             2, 4, "bullet", 5),
+		MerchantItem("Fragmentation Grenade",
+		             "Pull pin. Count two. Throw. Do not reverse those steps.",
+		             3, 3, "grenade", 1),
+		MerchantItem("Medium Armour",
+		             "Stripped from a Vigilis sergeant. Heavier, but reassuring.",
+		             4, 1, "armor_m", 1),
+		MerchantItem("Energy Pack",
+		             "Powers energy-based weapons and tools. Handle gently.",
+		             3, 3, "energy", 1),
+		MerchantItem("Officer's Sword",
+		             "A fine blade, barely used. Its owner preferred issuing orders.",
+		             4, 1, "weapon2", 1),
+	};
+
+	// stockZ3 items are intentionally left empty until Zone-3 content is written.
+	// Add MerchantItems here when ready.
+	stockZ3 = {};
+
+	// ── end merchant stock ──────────────────────────────────────────────────
+
 	// runPrologue uses mapList0 (populated above) and mapList1 for the post-prologue placement
 	runPrologue();
 }
@@ -423,28 +482,164 @@ int startGame::makeRolls(string stat, int mod, Player you){
 
 int startGame::makeRoll(){ return (rand() % 6) + 1; }
 
+// ── runShop ───────────────────────────────────────────────────────────────
+// Shared shopping loop used by all four merchants.
+// Keeps looping (do-while) until the player enters 0 to leave.
+// Merchants are never exhausted — the player can return any number of times
+// and the remaining stock is remembered between visits.
+void startGame::runShop(const string &merchantName, const string &greeting,
+                        const string &farewell, vector<MerchantItem> &items,
+                        Player &you)
+{
+	cout << "\n  [ " << merchantName << " ]\n";
+	cout << "  " << greeting << "\n";
+
+	string inputLine;
+	int choice = -1;
+	do {
+		// ── print the shelf ────────────────────────────────────────────────
+		cout << "\n  Trade goods on hand: " << you.getTradeGoods() << "\n";
+		cout << "  ─────────────────────────────────────────\n";
+		for (int i = 0; i < (int)items.size(); ++i) {
+			string stockLabel = (items[i].stock > 0)
+				? ("Stock: " + to_string(items[i].stock))
+				: "SOLD OUT";
+			cout << "  " << (i + 1) << ") " << items[i].name
+			     << "  [Cost: " << items[i].cost << " | " << stockLabel << "]\n";
+			cout << "     " << items[i].description << "\n";
+		}
+		cout << "  0) Leave\n";
+		cout << "  > ";
+
+		// ── read choice ────────────────────────────────────────────────────
+		choice = -1;
+		if (!getline(cin, inputLine)) break; // EOF / pipe closed
+		try { choice = stoi(inputLine); } catch (...) { choice = -1; }
+
+		if (choice == 0) break;
+
+		if (choice < 1 || choice > (int)items.size()) {
+			cout << "  That's not something I carry.\n";
+			continue;
+		}
+
+		MerchantItem &item = items[choice - 1];
+
+		if (item.stock <= 0) {
+			cout << "  I'm all out of " << item.name << ".\n";
+			continue;
+		}
+		if (you.getTradeGoods() < item.cost) {
+			cout << "  You need " << item.cost << " trade goods for that — "
+			     << "you only have " << you.getTradeGoods() << ".\n";
+			continue;
+		}
+
+		// ── confirm ────────────────────────────────────────────────────────
+		cout << "  " << item.name << " for " << item.cost
+		     << " trade good(s). Deal? (y/n) > ";
+		string confirm;
+		if (!getline(cin, confirm)) break;
+		if (confirm.empty() || tolower((unsigned char)confirm[0]) != 'y') {
+			cout << "  Maybe next time.\n";
+			continue;
+		}
+
+		// ── apply the purchase ─────────────────────────────────────────────
+		you.setTradeGoods(you.getTradeGoods() - item.cost);
+		item.stock--;
+
+		// applyEffect: read the tag and call the right player setter
+		const string &tag = item.effectTag;
+		int amt = item.effectAmt;
+		if      (tag == "food")    { you.setFood(you.getFood() + amt);
+		                             cout << "  You pack away " << amt << " day(s) of food.\n"; }
+		else if (tag == "meds")    { you.setMeds(you.getMeds() + amt);
+		                             cout << "  You stow " << amt << " medkit(s).\n"; }
+		else if (tag == "javelin") { you.setJavelin(you.getJavelin() + amt);
+		                             cout << "  You strap " << amt << " javelin(s) to your back.\n"; }
+		else if (tag == "bullet")  { you.setHasBullet(you.getHasBullet() + amt);
+		                             cout << "  You pocket " << amt << " round(s).\n"; }
+		else if (tag == "grenade") { you.setHasGrenade(you.getHasGrenade() + amt);
+		                             cout << "  You add " << amt << " grenade(s) to your kit.\n"; }
+		else if (tag == "energy")  { you.setHasEnergyPack(you.getHasEnergyPack() + amt);
+		                             cout << "  You clip " << amt << " energy pack(s) to your belt.\n"; }
+		else if (tag == "armor_l") { you.setArmor(1);
+		                             cout << "  You pull on the light armour.\n"; }
+		else if (tag == "armor_m") { you.setArmor(2);
+		                             cout << "  The medium armour is heavy but reassuring.\n"; }
+		else if (tag == "armor_h") { you.setArmor(3);
+		                             cout << "  You buckle on the heavy armour.\n"; }
+		else if (tag == "weapon1") { you.getHasWeapon1(true);
+		                             cout << "  You shoulder the rifle.\n"; }
+		else if (tag == "weapon2") { you.getHasWeapon2(true);
+		                             cout << "  The officer's sword hangs at your hip.\n"; }
+		else if (tag == "hp_max")  { you.setMaxHp(you.getMaxHp() + amt);
+		                             you.setHp(you.getHp() + amt);
+		                             cout << "  Maximum HP +" << amt << ".\n"; }
+		else if (tag == "shield_rel") {
+			int cur = you.getShieldRelic();
+			you.setShieldRelic((cur < 0 ? 0 : cur) + amt);
+			cout << "  Shield relic charges +" << amt << ".\n";
+		}
+		else { cout << "  (Nothing happens. The merchant shrugs.)\n"; }
+
+		cout << "  Trade goods remaining: " << you.getTradeGoods() << "\n";
+
+	} while (choice != 0);
+
+	cout << "  " << farewell << "\n\n";
+}
+
+// ── Zone-1 · Food / Provisions merchant ─────────────────────────────────────
+// A travelling butcher who followed the looters hoping to sell preserved meat
+// and field medicine to anyone passing through.
 void startGame::merchantMeat(Player &you) {
-	cout << "[merchantMeat] You encounter a traveling butcher." << endl;
-	you.printTradeInfo();
-	// Minimal safe effect: if player has trade goods, convert to food/xp
-	if (you.getHasTradeGoods()) {
-		//SOMETHING NEEDS TO GO HERE, STUB
-
-
-
-	} else {
-		cout << "You don't have goods to trade." << endl;
-	}
+	runShop(
+		"Arkell's Provisions",
+		"Oi! Over here. You look like someone who hasn't eaten a hot meal in a week. "
+		"Smart thing, stocking up while you can.",
+		"Watch yourself in there. Come back if you run low.",
+		stockMeat, you
+	);
 }
+
+// ── Zone-1 · General salvager ────────────────────────────────────────────────
+// A former city resident who stayed behind. He salvaged weapons and light gear
+// from the outer sections and now trades them for travel goods.
 void startGame::merchantZ1(Player &you) {
-	cout << "[merchantZ1] A local vendor offers trinkets." << endl;
-	you.printTradeInfo();
-	if (you.getHasTradeGoods()) { you.setXp(you.getXp() + 1); cout << "Small trade completed." << endl; }
+	runShop(
+		"Salvager's Corner",
+		"I know what you are. You're the same as me — came here looking for something "
+		"worth having. Difference is I already found mine. Maybe we can help each other.",
+		"Don't get killed before you can spend what you got from me.",
+		stockZ1, you
+	);
 }
+
+// ── Zone-2 · Specialist dealer ───────────────────────────────────────────────
+// An independent arms dealer who has pushed deeper into the city than most.
+// He carries rare ammunition, grenades, and armour stripped from inner defenders.
 void startGame::merchantZ2(Player &you) {
-	cout << "[merchantZ2] A refined stall sells rare items." << endl;
-	you.printTradeInfo();
-	if (you.getHasTradeGoods()) { you.setXp(you.getXp() + 3); cout << "You managed a profitable trade." << endl; }
+	runShop(
+		"The Quiet Stall",
+		"Not many make it this far. You've earned the right to browse. "
+		"If the price looks steep, consider what the alternative is.",
+		"Spend those goods wisely. There aren't many places left to spend them.",
+		stockZ2, you
+	);
+}
+
+// ── Zone-3 · Core relic trader (STUB) ───────────────────────────────────────
+// Placeholder until Zone-3 content and items are written.
+// Add items to stockZ3 in the constructor and replace this greeting when ready.
+void startGame::merchantZ3(Player &you) {
+	runShop(
+		"Vashti's Exchange",
+		"... (The merchant eyes you silently. Their wares are not yet laid out.)",
+		"Come back when there is more to offer.",
+		stockZ3, you
+	);
 }
 
 void startGame::outSide(){ if (!mapList0.empty()) takeAction(*mapList0[0], player); }

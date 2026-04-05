@@ -1,16 +1,18 @@
 #ifndef _PLAYER_H_
 #define _PLAYER_H_
-
+ 
 //TODO: I need to finish with loc encounters first. Then I take a log of every variable that needs to be tracked on the palyer
 //sheet. Then I make a variable, a setter and getter for the variable.
 #include <string>
 #include "foe.h"
-
+ 
 class Foe;//doing this jst to see if a foreward declaire fixes anything
 struct Player {
 public:
 	bool getHasPet() { return hasPet; }; 
 	bool getInspiredByMusic() { return inspired; }; bool getHasTradeGoods() { return hasTradeGoods; };
+	int  getTradeGoods()            { return tradeGoods; }
+	void setTradeGoods(int num)     { tradeGoods = num; hasTradeGoods = (num > 0); }
 	int getStatBd() { return statBd; }; //body
 	int getStatAg() {return statAg;}; //agility
 	int getStatIn() { return statIn; }; //intelligence
@@ -69,7 +71,7 @@ public:
 	bool useJavelin(Foe &foe);
 	bool useGrenade(Foe &foe);
 	bool useRifle(Foe &foe);
-
+ 
 private:
 	int statBd = 2; //body
 	int statAg = 2; //agility
@@ -81,6 +83,7 @@ private:
 	int shield = 0;
 	int food = 0;
 	bool hasPet = 0; bool hasTool1 = 0; int inspired = 0; bool hasTradeGoods = 0;
+	int tradeGoods = 0; // how many trade-good units the player currently carries
 	bool hasTool2 = 0;
 	bool hasWeapon1=0; //rifle
 	bool hasWeapon2 =0; //officers sword
