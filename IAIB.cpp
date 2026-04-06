@@ -53,48 +53,36 @@ startGame::startGame(string foeFile, string locFile) {
 	// To add a new item: add a MerchantItem here and a matching tag case there.
 
 	stockMeat = {
-		MerchantItem("Dried Rations (3 days)",
-		             "Salt-cured strips of meat packed in waxed cloth. "
-		             "Dense, unpleasant, and exactly what you need.",
-		             1, 4, "food", 3),
-		MerchantItem("Pocket Rations (1 day)",
-		             "A single day's worth of hard bread and jerky.",
-		             1, 6, "food", 1),
-		MerchantItem("Field Medkit",
-		             "Bandages, a needle, and a small vial of antiseptic.",
-		             2, 3, "meds", 1),
+		MerchantItem("Pottage (3 food)",
+		             "Beef and onions sealed in a clay jar and cooked until compleatly soft. A layer of fat protects the food from spoiling. ",
+		             1, 3, "food", 3),
 	};
 
 	stockZ1 = {
-		MerchantItem("Scavenged Rifle",
-		             "Dented but functional. Someone left this behind in a hurry.",
-		             3, 1, "weapon1", 1),
 		MerchantItem("Light Armour",
-		             "Padded leather reinforced with salvaged plate strips.",
-		             2, 1, "armor_l", 1),
-		MerchantItem("Javelin (x2)",
+		             "Padded leather lightly reinforced with chainmail.",
+		             4, 1, "armor_l", 1),
+		MerchantItem("Javelin (x3)",
 		             "Two balanced throwing spears — useful for opening a gap.",
-		             2, 3, "javelin", 2),
-		MerchantItem("Medkit",
-		             "Same field kit as the butcher sells, marked up for the walk.",
+		             2, 3, "javelin", 3),
+		MerchantItem("Medicine pouch",
+		             "String and needle. Herbal pastes, and pure alchohol.",
 		             2, 2, "meds", 1),
 	};
 
 	stockZ2 = {
 		MerchantItem("Rifle Ammunition (x5)",
-		             "Five rounds of standard-gauge military ammunition.",
+		             "A cartidge of 6.5x52 caliber ammo.",
 		             2, 4, "bullet", 5),
 		MerchantItem("Fragmentation Grenade",
-		             "Pull pin. Count two. Throw. Do not reverse those steps.",
-		             3, 3, "grenade", 1),
+		             "Supposedly sold to the merchant by a defector, a full brace of gernades can be found for sale",
+		             3, 5, "grenade", 1),
 		MerchantItem("Medium Armour",
-		             "Stripped from a Vigilis sergeant. Heavier, but reassuring.",
+		             "Stripped from a Vigilis sergeant. Heavy, yet reassuring.",
 		             4, 1, "armor_m", 1),
-		MerchantItem("Energy Pack",
-		             "Powers energy-based weapons and tools. Handle gently.",
-		             3, 3, "energy", 1),
+
 		MerchantItem("Officer's Sword",
-		             "A fine blade, barely used. Its owner preferred issuing orders.",
+		             "This fourign style of sword was obviously loot from some far off land, used by an unfortunate officer during the battle here. May it serve you better than him.",
 		             4, 1, "weapon2", 1),
 	};
 
