@@ -283,7 +283,7 @@ void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int curMapZon
 	}
 
 	//locates where the exit hex is, and activates it
-	gameMap[exitCol][exitRow].setIsExit(true);
+	gameMap[exitCol][exitRow].setIsExit();
 
 }
 

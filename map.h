@@ -44,6 +44,7 @@ private:
 	bool location = 0; //when 0, there is no interesting location
 	bool isCurLoc =0;
 	loc* thisLoc = nullptr;
+	bool isExit;
 };
 
 #endif

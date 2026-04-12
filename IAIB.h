@@ -77,7 +77,7 @@ void takeAction(loc place, Player &you, bool showLocationText = true);
 //outputs a number using makeRoll
 static int makeRolls(string stat, int mod, Player you);
 //outputs a random 1-6 number
-int makeRoll();
+static int makeRoll();
 
 //the merchant functions run when entering a merchant location.
 // runShop() is the shared do-while loop used by all four merchants.
