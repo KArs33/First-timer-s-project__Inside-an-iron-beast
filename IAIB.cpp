@@ -355,28 +355,27 @@ bool startGame::findCurLocation(int &outX, int &outY){
 	return false;
 }
 
-bool startGame::movePlayer(const string &dir){
-	int x,y; if(!findCurLocation(x,y)) return false;
-	int nx=x, ny=y;
-	if(dir=="n") ny -= 1;
-	else if(dir=="s") ny += 1;
-	else if(dir=="e") nx += 1;
-	else if(dir=="w") nx -= 1;
-	else if(dir=="nw"){ nx-=1; ny-=1; }
-	else if(dir=="ne"){ nx+=1; ny-=1; }
-	else if(dir=="sw"){ nx-=1; ny+=1; }
-	else if(dir=="se"){ nx+=1; ny+=1; }
-	if(nx<0||ny<0||nx>=WidthMAPMAX||ny>=HeightMapMax) return false;
-	if(gameMap[nx][ny].getBlank()) return false;
-	// move marker
-	setCurLocation(nx, ny);
-	cout << "You move "<<dir<<" to ("<<nx<<","<<ny<<")"<<endl;
-	// if location exists, run its action
-	if(gameMap[nx][ny].getLoc()){
-		loc* cellLocPtr = gameMap[nx][ny].getLocObj();
-		if (cellLocPtr) takeAction(*cellLocPtr, player);
-	}
-	return true;
+bool startGame::movePlayer(const string &dir) {
+    int x, y;
+    if (!findCurLocation(x, y)) return false;
+    auto [nx, ny] = hexNeighbor(x, y, dir); 
+    if (nx < 0 || ny < 0 || nx >= WidthMAPMAX || ny >= HeightMapMax) return false;
+    if (gameMap[nx][ny].getBlank()) return false;
+
+    setCurLocation(nx, ny);
+
+    // Zone exit check
+    if (gameMap[nx][ny].getIsExit()) {
+        cout << "You find a passage deeper into the city...\n";
+        advanceZone(); 
+        return true;
+    }
+
+    if (gameMap[nx][ny].getLoc()) {
+        loc* lp = gameMap[nx][ny].getLocObj();
+        if (lp) takeAction(*lp, player);
+    }
+    return true;
 }
 
 void startGame::takeAction(loc place, Player &you, bool showLocationText){
