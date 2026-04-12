@@ -253,67 +253,38 @@ void startGame::buildFoeList(){
 }
 
 void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int curMapZone){
-	// Determine region bounds based on curMapZone:
-	// zones 1..4 map to quadrants; zone 0 maps to the center area.
-	int xStart = 0, xEnd = WidthMAPMAX - 1, yStart = 0, yEnd = HeightMapMax - 1;
-	int halfW = WidthMAPMAX / 2;
-	int halfH = HeightMapMax / 2;
-	if (curMapZone == 1) { // top-left
-		xStart = 0; xEnd = max(0, halfW - 1);
-		yStart = 0; yEnd = max(0, halfH - 1);
-	} else if (curMapZone == 2) { // top-right
-		xStart = halfW; xEnd = WidthMAPMAX - 1;
-		yStart = 0; yEnd = max(0, halfH - 1);
-	} else if (curMapZone == 3) { // bottom-left
-		xStart = 0; xEnd = max(0, halfW - 1);
-		yStart = halfH; yEnd = HeightMapMax - 1;
-	} else if (curMapZone == 4) { // bottom-right
-		xStart = halfW; xEnd = WidthMAPMAX - 1;
-		yStart = halfH; yEnd = HeightMapMax - 1;
-	} else { // zone 0 -> center region (try a small box around the center)
-		int cx = WidthMAPMAX / 2;
-		int cy = HeightMapMax / 2;
-		xStart = max(0, cx - 1); xEnd = min(WidthMAPMAX - 1, cx + 1);
-		yStart = max(0, cy - 1); yEnd = min(HeightMapMax - 1, cy + 1);
+
+	//clear the map
+	for (int x =0; x< WidthMAPMAX; ++x){
+		for(int y = 0; y <HeightMapMax; ++y){
+			gameMap[x][y] = MAP(); //cell is now blank
+		}
 	}
 
-	// collect playable parity cells within the region
+	// top to bottom build of cells
+	// row 0 is the starting row, row 1 is one row down, and so on
 	vector<pair<int,int>> cells;
-	for (int i = xStart; i <= xEnd; ++i) {
-		for (int j = yStart; j <= yEnd; ++j) {
-			if ((i + j) % 2 == 0) cells.emplace_back(i, j);
-			else gameMap[i][j].setBlank();
+	for (int y =0; y <HeightMapMax; ++y){
+		for(int x=0; x< WidthMAPMAX; ++x){
+			cells.emplace_back(x,y);
 		}
-	}
-	// sort cells by distance to region center (center-first)
-	double cx = (xStart + xEnd) / 2.0;
-	double cy = (yStart + yEnd) / 2.0;
-	sort(cells.begin(), cells.end(), [&](const pair<int,int> &a, const pair<int,int> &b){
-		double da = (a.first - cx)*(a.first - cx) + (a.second - cy)*(a.second - cy);
-		double db = (b.first - cx)*(b.first - cx) + (b.second - cy)*(b.second - cy);
-		return da < db;
-	});
-
-	int idx = 0;
-	for (auto &p : cells) {
-		int i = p.first, j = p.second;
-		if (idx < (int)locVec.size() && idx < (int)foeVec.size()) {
-			gameMap[i][j] = MAP(foeVec[idx], idx, locVec[idx]);
-		} else {
-			gameMap[i][j].setBlank();
-		}
-		++idx;
 	}
 
-	// Any remaining map cells outside the chosen region should be blanked out
-	for (int i = 0; i < WidthMAPMAX; ++i) {
-		for (int j = 0; j < HeightMapMax; ++j) {
-			if (i >= xStart && i <= xEnd && j >= yStart && j <= yEnd) continue;
-			// keep the original parity behaviour
-			if ((i + j) % 2 != 0) { gameMap[i][j].setBlank(); continue; }
-			gameMap[i][j].setBlank();
-		}
+	//place locations and foes into map cells
+	int exitCol= WidthMAPMAX /2;
+	int exitRow = HeightMapMax -1;
+	int locIdx=0, foeIdx =0;
+	for (auto &[x,y]: cells){
+       if (x == exitCol && y == exitRow) continue; // reserve for exit
+        if (locIdx < (int)locVec.size()) {
+            Foe f = (foeIdx < (int)foeVec.size()) ? foeVec[foeIdx++] : Foe();
+            gameMap[x][y] = MAP(f, foeIdx, locVec[locIdx++]);
+        }		
 	}
+
+	//locates where the exit hex is, and activates it
+	gameMap[exitCol][exitRow].setIsExit(true);
+
 }
 
 void startGame::mapPrint(){
