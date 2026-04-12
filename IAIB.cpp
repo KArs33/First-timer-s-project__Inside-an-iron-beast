@@ -378,6 +378,26 @@ bool startGame::movePlayer(const string &dir) {
     return true;
 }
 
+void startGame::advanceZone(){
+	//I need a way to detect if an incorrect curMapZone exists, or if the function is being called in bad places in my code
+	curMapZone++;
+	switch(curMapZone){
+		case 2:
+			fillInMap(mapList2, foeV2, 2);
+			break;
+		case 3:
+			fillInMap(mapList3, foeV3, 3);
+			break;
+		case 4:
+			fillInMap(mapList4, foeV4, 4);
+			break;
+		default:
+			lastFloor();
+			break;
+	}
+	setCurLocation(WidthMAPMAX/2,0);
+}
+
 void startGame::takeAction(loc place, Player &you, bool showLocationText){
 	if (showLocationText) {
 		cout << "Location: " << place.getName() << "\n" << place.getDescription() << endl;
