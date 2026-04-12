@@ -54,6 +54,7 @@ public:
 	//note for future expansion, rather than make an empty player, maybe run a script asking for chracter customization?
 	//do I give the player a name?
 
+
 //Iterates over the class gameMap member and fills in locations.
 void fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int curMapZone);
 
@@ -115,10 +116,11 @@ void wireTrap(Foe &foe);
 	void doorTrap(Foe &foe);
 void startCombat(Foe &foe);
 void printTutorial();
+void advanceZone();
+pair<int,int> hexNeighbor(int, int, const string&);
 
 
-
-vector<string> mainMenuVec={"n","s","w","e","nw","sw","ne","se","m","xp","i"};
+vector<string> mainMenuVec={"n","s","nw","sw","ne","se","m","xp","i"};
 
 	// Merchant stock vectors — kept here so stock persists across re-visits.
 	// Populated in the startGame constructor.

@@ -287,18 +287,20 @@ void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int curMapZon
 
 }
 
-void startGame::mapPrint(){
-	for (int y = 0; y < HeightMapMax; ++y) {
-		for (int x = 0; x < WidthMAPMAX; ++x) {
-			if ((x + y) % 2 == 0) {
-				if (gameMap[x][y].getIsCurLoc()) cout << "P"; // player's position
-				else cout << (gameMap[x][y].getBlank() ? "." : "#");
-			}
-			else cout << ' ';
-			cout << ' ';
-		}
-		cout << '\n';
-	}
+void startGame::mapPrint() {
+    for (int y = 0; y < HeightMapMax; ++y) {
+        for (int x = 0; x < WidthMAPMAX; ++x) {
+            // odd columns get a leading half-space for hex stagger
+            string prefix = (x % 2 == 1) ? " " : "";
+            char cell;
+            if      (gameMap[x][y].getIsCurLoc()) cell = 'P';
+            else if (gameMap[x][y].getIsExit())   cell = 'X'; // exit marker
+            else if (gameMap[x][y].getBlank())    cell = '.';
+            else                                  cell = '#';
+            cout << prefix << cell << " ";
+        }
+        cout << '\n';
+    }
 }
 
 void startGame::mainMenu(){
@@ -396,6 +398,22 @@ void startGame::advanceZone(){
 			break;
 	}
 	setCurLocation(WidthMAPMAX/2,0);
+}
+
+// Returns the hex neighbor of (col, row) in direction dir.
+// Uses even-column offset (col%2==0 shifts up, odd shifts down).
+// Directions: "n","s","nw","ne","sw","se"
+pair<int,int> startGame::hexNeighbor(int col, int row, const string &dir) {
+    // even col: upper diagonals shift left/right at same row-1
+    // odd col:  upper diagonals shift left/right at row (same row for upper)
+    int isOdd = col % 2; // 1 if odd column
+    if (dir == "n")  return {col,      row - 1};
+    if (dir == "s")  return {col,      row + 1};
+    if (dir == "nw") return {col - 1,  isOdd ? row     : row - 1};
+    if (dir == "ne") return {col + 1,  isOdd ? row     : row - 1};
+    if (dir == "sw") return {col - 1,  isOdd ? row + 1 : row    };
+    if (dir == "se") return {col + 1,  isOdd ? row + 1 : row    };
+    return {-1, -1}; // invalid direction
 }
 
 void startGame::takeAction(loc place, Player &you, bool showLocationText){

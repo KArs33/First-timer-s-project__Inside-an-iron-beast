@@ -14,7 +14,12 @@ public:
 		foeID = foeNum;
 		if (mapLocation == nullptr) { blank = true; }
 		else { thisLoc = mapLocation; blank = false; foeID = foeNum; }
+
+		bool isExit = false;
 	}
+
+	void setIsExit();
+	bool getIsExit();
 	void setFoe();
 	void setFoeID(int num);
 	int getFoeID();
