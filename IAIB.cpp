@@ -416,6 +416,122 @@ pair<int,int> startGame::hexNeighbor(int col, int row, const string &dir) {
     return {-1, -1}; // invalid direction
 }
 
+
+void startGame::applyRewardCodes(const string &codes, Player &you){
+	if (codes.empty() || codes == "NULL") return;
+ 
+	istringstream ss(codes);
+	string token;
+	while (getline(ss, token, ',')) {
+		// trim whitespace
+		size_t a = 0;
+		while (a < token.size() && isspace((unsigned char)token[a])) ++a;
+		size_t b = token.size();
+		while (b > a && isspace((unsigned char)token[b-1])) --b;
+		token = token.substr(a, b - a);
+ 
+		if (token.empty() || token == "NULL") continue;
+ 
+		// expect: one letter, then '+' or '-', then digits
+		if (token.size() < 3) {
+			cout << "[reward] Unrecognised token: '" << token << "'\n";
+			continue;
+		}
+		char code = token[0];
+		char sign = token[1];
+		if (sign != '+' && sign != '-') {
+			cout << "[reward] Unrecognised token: '" << token << "'\n";
+			continue;
+		}
+		int amount = 0;
+		try { amount = stoi(token.substr(1)); }  // stoi handles the +/- sign
+		catch (...) {
+			cout << "[reward] Could not parse number in: '" << token << "'\n";
+			continue;
+		}
+ 
+		switch (code) {
+			// ── consumables / resources ─────────────────────────────────
+			case 'f':
+				you.setFood(you.getFood() + amount);
+				cout << (amount >= 0 ? "You gain " : "You lose ")
+				     << abs(amount) << " food. (Now: " << you.getFood() << ")\n";
+				break;
+			case 'h':
+				you.setHp(min(you.getHp() + amount, you.getMaxHp()));
+				if (you.getHp() < 0) you.setHp(0);
+				cout << (amount >= 0 ? "HP restored by " : "HP reduced by ")
+				     << abs(amount) << ". (Now: " << you.getHp() << ")\n";
+				break;
+
+			case 't':
+				you.setTradeGoods(max(0, you.getTradeGoods() + amount));
+				cout << (amount >= 0 ? "You gain " : "You spend ")
+				     << abs(amount) << " trade good(s). (Now: " << you.getTradeGoods() << ")\n";
+				break;
+
+			case 'j':
+				you.setJavelin(max(0, you.getJavelin() + amount));
+				cout << (amount >= 0 ? "You find " : "You lose ")
+				     << abs(amount) << " javelin(s). (Now: " << you.getJavelin() << ")\n";
+				break;
+			case 'b':
+				you.setHasBullet(max(0, you.getHasBullet() + amount));
+				cout << (amount >= 0 ? "You find " : "You use ")
+				     << abs(amount) << " bullet(s). (Now: " << you.getHasBullet() << ")\n";
+				break;
+			case 'z':
+				you.setMeds(max(0, you.getMeds() + amount));
+				cout << (amount >= 0 ? "You find " : "You use ")
+				     << abs(amount) << " medicine. (Now: " << you.getMeds() << ")\n";
+				break;
+			case 's':
+				{
+					int cur = you.getShieldRelic();
+					you.setShieldRelic((cur < 0 ? 0 : cur) + amount);
+					cout << "Shield relic charges " << (amount >= 0 ? "+" : "") << amount << ".\n";
+				}
+				break;
+			// ── stats ───────────────────────────────────────────────────
+			case 'A':
+				you.setStatAg(you.getStatAg() + amount);
+				cout << "Agility " << (amount >= 0 ? "+" : "") << amount
+				     << ". (Now: " << you.getStatAg() << ")\n";
+				break;
+			case 'B':
+				you.setStatBd(you.getStatBd() + amount);
+				cout << "Body " << (amount >= 0 ? "+" : "") << amount
+				     << ". (Now: " << you.getStatBd() << ")\n";
+				break;
+			case 'G':
+				you.setStatGu(you.getStatGu() + amount);
+				cout << "Guile " << (amount >= 0 ? "+" : "") << amount
+				     << ". (Now: " << you.getStatGu() << ")\n";
+				break;
+			case 'I':
+				you.setStatIn(you.getStatIn() + amount);
+				cout << "Intelligence " << (amount >= 0 ? "+" : "") << amount
+				     << ". (Now: " << you.getStatIn() << ")\n";
+				break;
+			// ── toggles / flags ─────────────────────────────────────────
+			case 'P': case 'p':
+				if (amount > 0) {
+					you.setHasPet();
+					cout << "You have gained a companion!\n";
+				}
+				break;
+			case 'i':
+				you.setInspired(you.getInspired() + amount);
+				cout << "Inspiration " << (amount >= 0 ? "+" : "") << amount << ".\n";
+				break;
+			default:
+				cout << "[reward] Unknown code '" << code << "' in token: '" << token << "'\n";
+				break;
+		}
+	}
+}
+
+
 void startGame::takeAction(loc place, Player &you, bool showLocationText){
 	if (showLocationText) {
 		cout << "Location: " << place.getName() << "\n" << place.getDescription() << endl;
@@ -448,20 +564,35 @@ void startGame::takeAction(loc place, Player &you, bool showLocationText){
 		if (choice >= 1 && choice <= options) break;
 		cout << "Invalid, re-enter: ";
 	}
+
+
+	//implimenting rewards now
+	//pop = passed, fop = failed
+	string pop, fop;
+
 	string stat; int need = 0; string passMsg, failMsg;
-	if (choice == 1) { stat = place.getOp1Stat(); need = place.getOp1StatNum(); passMsg = place.getOp1pass(); failMsg = place.getOp1fail(); }
-	else if (choice == 2) { stat = place.getOp2Stat(); need = place.getOp2StatNum(); passMsg = place.getOp2pass(); failMsg = place.getOp2fail(); }
-	else { stat = place.getOp3Stat(); need = place.getOp3StatNum(); passMsg = place.getOp3pass(); failMsg = place.getOp3fail(); }
-	int xpBefore = you.getXp();
+	if (choice == 1) { stat = place.getOp1Stat(); need = place.getOp1StatNum(); passMsg = place.getOp1pass(); failMsg = place.getOp1fail(); pop=place.getPop1(); fop=place.getFop1();}
+	else if (choice == 2) { stat = place.getOp2Stat(); need = place.getOp2StatNum(); passMsg = place.getOp2pass(); failMsg = place.getOp2fail(); pop=place.getPop2(); fop=place.getFop2();}
+	else { stat = place.getOp3Stat(); need = place.getOp3StatNum(); passMsg = place.getOp3pass(); failMsg = place.getOp3fail(); pop=place.getPop3(); fop=place.getFop3();}
+	// this was for debugging int xpBefore = you.getXp();
+
+	//implimenting rewards now
+	//pop = passed, fop = failed
+	string pop, fop;
+	
+
+
 	int roll = makeRolls(stat, 0, you);
 	//cout << "[DEBUG] need="<<need<<" stat='"<<stat<<"' roll="<<roll<<" xpBefore="<<xpBefore<<"\n";
 	cout << "You roll " << roll << " against needed " << need << " (" << stat << ")" << endl;
 	if (need == 0 || roll >= need) {
 		cout << "Success: " << passMsg << endl;
 		you.setXp(you.getXp() + 1);
+		applyRewardCodes(pop, you);
 	} else {
 		cout << "Failure: " << failMsg << endl;
 		you.setHp(you.getHp() - 2);
+		applyRewardCodes(fop, you);
 	}
 }
 

@@ -92,6 +92,9 @@ void merchantZ3  (Player &you);  // Zone-3: trader (stub)
 //this should be in a while loop. Will run most of the game
 void mainMenu(); 
 
+//used for reading and setting rewards for visiting a location
+void applyRewardCodes(const string &codes, Player &you);
+
 // movement helpers
 bool findCurLocation(int &outX, int &outY);
 bool movePlayer(const string &dir);

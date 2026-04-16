@@ -61,7 +61,7 @@ t = trade good		T = tools
 u = unexploded shell
 v
 w
-x
+x = NULL			X = NULL
 y	
 z = medicine
 ---
