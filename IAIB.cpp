@@ -592,10 +592,7 @@ void startGame::runShop(const string &merchantName, const string &greeting,
 // and field medicine to anyone passing through.
 void startGame::merchantMeat(Player &you) {
 	runShop(
-		"Arkell's Provisions",
-		"Oi! Over here. You look like someone who hasn't eaten a hot meal in a week. "
-		"Smart thing, stocking up while you can.",
-		"Watch yourself in there. Come back if you run low.",
+		"",
 		stockMeat, you
 	);
 }
@@ -605,10 +602,7 @@ void startGame::merchantMeat(Player &you) {
 // from the outer sections and now trades them for travel goods.
 void startGame::merchantZ1(Player &you) {
 	runShop(
-		"Salvager's Corner",
-		"I know what you are. You're the same as me — came here looking for something "
-		"worth having. Difference is I already found mine. Maybe we can help each other.",
-		"Don't get killed before you can spend what you got from me.",
+		"",
 		stockZ1, you
 	);
 }
@@ -618,10 +612,7 @@ void startGame::merchantZ1(Player &you) {
 // He carries rare ammunition, grenades, and armour stripped from inner defenders.
 void startGame::merchantZ2(Player &you) {
 	runShop(
-		"The Quiet Stall",
-		"Not many make it this far. You've earned the right to browse. "
-		"If the price looks steep, consider what the alternative is.",
-		"Spend those goods wisely. There aren't many places left to spend them.",
+		"",
 		stockZ2, you
 	);
 }
@@ -631,9 +622,7 @@ void startGame::merchantZ2(Player &you) {
 // Add items to stockZ3 in the constructor and replace this greeting when ready.
 void startGame::merchantZ3(Player &you) {
 	runShop(
-		"Vashti's Exchange",
-		"... (The merchant eyes you silently. Their wares are not yet laid out.)",
-		"Come back when there is more to offer.",
+		"",
 		stockZ3, you
 	);
 }

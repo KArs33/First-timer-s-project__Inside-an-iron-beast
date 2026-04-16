@@ -36,6 +36,34 @@ OP#pass is the string that prints when the player passes the test.
 pop# stands for Passed OP #; and contains the name of the code that will excecute if the player picks that OP, and passes the test. fop# is the same, but for when they fail
 
 
+
+---reward codes
+a = amulet			A = Agility stat
+b = ammo for rifle	B = Body stat
+c = cipher			C
+d					D
+e					E = start special encounter
+f = food			F = Fuel
+g = gasmask			G = Guile stat
+h = health
+i = inspiration		I = Intelegence stat
+j = javalin
+k = key to forge	K = key to vault
+l
+m = morale			M = open menu for trader
+n
+o = orb
+p = Priest's Secret	P = Pet
+q
+r = rifle			R = Ring used for zone 3
+s = sheild relic	S = Sword
+t = trade good		T = tools
+u = unexploded shell
+v
+w
+x
+y	
+z = medicine
 ---
 
 Quick run & debug notes (Windows / PowerShell)
