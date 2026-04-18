@@ -4,7 +4,7 @@
 MAP::MAP() : blank(true), mapFoe(false), foeID(0), location(false), isCurLoc(false), thisLoc(nullptr) {}
 
 bool MAP::getIsExit(){return isExit;}
-void MAP::setIsExit(){isExit=true;}
+void MAP::setIsExit(){isExit=true; blank = false;}
 void MAP::setFoe() { mapFoe = !mapFoe; }
 void MAP::setFoeID(int num){ foeID = num; }
 int MAP::getFoeID(){ return foeID; }
