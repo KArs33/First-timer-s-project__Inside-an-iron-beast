@@ -12,10 +12,9 @@ public:
 		thisFoeObj = thisMapFoe;
 		mapFoe = !(thisMapFoe == Foe());
 		foeID = foeNum;
-		if (mapLocation == nullptr) { blank = true; }
-		else { thisLoc = mapLocation; blank = false; foeID = foeNum; }
-
-		bool isExit = false;
+		isExit = false; // must initialise member, not shadow it
+		if (mapLocation == nullptr) { blank = true; location = false; }
+		else { thisLoc = mapLocation; blank = false; location = true; foeID = foeNum; }
 	}
 
 	void setIsExit();
@@ -35,6 +34,8 @@ public:
 
 	// return stored location pointer (may be nullptr)
 	loc* getLocObj();
+	// return stored foe by reference so combat can modify it in place
+	Foe& getFoeObj();
 
 private:
 	bool blank = 1; //when 0, the location does not exist on the map
@@ -44,7 +45,7 @@ private:
 	bool location = 0; //when 0, there is no interesting location
 	bool isCurLoc =0;
 	loc* thisLoc = nullptr;
-	bool isExit;
+	bool isExit = false;
 };
 
 #endif

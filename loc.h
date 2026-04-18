@@ -49,6 +49,12 @@ public:
 	string getOp2() { return op2; };
 	void setOp3(string x) { op3 = x; };
 	string getOp3() { return op3; };
+	string getPop1() { return pop1; }
+	string getFop1() { return fop1; }
+	string getPop2() { return pop2; }
+	string getFop2() { return fop2; }
+	string getPop3() { return pop3; }
+	string getFop3() { return fop3; }
 	bool operator==( loc rhs){
 		if(rhs.getName()!="The path continues")return false; else return true;
 	}
@@ -75,12 +81,6 @@ private:
 	int zone =-1; // 0=is the prologue, Then there are 3 main zones. Outside, Shanty/Upper, Middle, Core. 
 				//4 is for the boss fight. -1 is used for a default loc, and I dont know if I will implement it in any way
 	int locID=0;
-	string getPop1() { return pop1; }
-	string getFop1() { return fop1; }
-	string getPop2() { return pop2; }
-	string getFop2() { return fop2; }
-	string getPop3() { return pop3; }
-	string getFop3() { return fop3; }
 };
 
 

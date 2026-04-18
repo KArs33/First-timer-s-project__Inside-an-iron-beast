@@ -15,6 +15,12 @@ using namespace std;
 
 static string fixEscapedQuotes(const string &s) { return s; }
 
+// Strip trailing \r from strings parsed from Windows-format (CRLF) text files.
+static string stripCR(const string &s) {
+	if (!s.empty() && s.back() == '\r') return s.substr(0, s.size() - 1);
+	return s;
+}
+
 // safe stoi helper: returns defaultVal if conversion fails
 static int safeStoi(const string &s, int defaultVal = -1) {
 	try {
@@ -45,7 +51,8 @@ startGame::startGame(string foeFile, string locFile) {
 	m_locFile = locFile;
 	buildFoeList();
 	buildMapLists(mapList1, mapList2, mapList3); // populates mapList0..4 via partitionLocsByZone
-	if (!mapList1.empty() && !foeV1.empty()) fillInMap(mapList1, foeV1, 1);
+	if (!mapList1.empty()) fillInMap(mapList1, foeV1.empty() ? vector<Foe>() : foeV1, 1);
+	curMapZone = 1; // zone-1 loaded; advanceZone will step to 2 next
 
 	// ── Merchant stock ──────────────────────────────────────────────────────
 	// MerchantItem(name, description, cost, stock, effectTag, effectAmt)
@@ -190,6 +197,13 @@ void startGame::buildMapLists(vector<loc*>& m1, vector<loc*>& m2, vector<loc*>& 
 		string pop3    = parts.size() > 23 ?          parts[23]      : string();
 		string fop3    = parts.size() > 24 ?          parts[24]      : string();
 
+		// Strip trailing \r from all text fields (Windows CRLF source files)
+		name=stripCR(name); desc=stripCR(desc);
+		o1=stripCR(o1); opS1=stripCR(opS1); op1f=stripCR(op1f); op1p=stripCR(op1p);
+		o2=stripCR(o2); opS2=stripCR(opS2); op2f=stripCR(op2f); op2p=stripCR(op2p);
+		o3=stripCR(o3); opS3=stripCR(opS3); op3f=stripCR(op3f); op3p=stripCR(op3p);
+		pop1=stripCR(pop1); fop1=stripCR(fop1); pop2=stripCR(pop2); fop2=stripCR(fop2);
+		pop3=stripCR(pop3); fop3=stripCR(fop3);
 		loc* l = new loc(name, desc, options, zone,
 		                 o1, opS1, opN1, op1f, op1p,
 		                 o2, opS2, opN2, op2f, op2p,
@@ -244,6 +258,7 @@ void startGame::buildFoeList(){
 		// parts[8] is the reward code — stored but not yet consumed by this class
 		string defeat  = parts.size() > 9 ?           parts[9]       : string();
 
+		name=stripCR(name); desc=stripCR(desc); defeat=stripCR(defeat);
 		Foe f(name, power, desc, zone, shield, uAI, reward, pursuit, defeat);
 		if      (zone == 1) foeV1.push_back(f);
 		else if (zone == 2) foeV2.push_back(f);
@@ -252,51 +267,57 @@ void startGame::buildFoeList(){
 	}
 }
 
-void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int curMapZone){
+void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int /*curMapZone*/){
 
-	//clear the map
-	for (int x =0; x< WidthMAPMAX; ++x){
-		for(int y = 0; y <HeightMapMax; ++y){
-			gameMap[x][y] = MAP(); //cell is now blank
-		}
-	}
+	// Clear the map
+	for (int x = 0; x < WidthMAPMAX; ++x)
+		for (int y = 0; y < HeightMapMax; ++y)
+			gameMap[x][y] = MAP();
 
-	// top to bottom build of cells
-	// row 0 is the starting row, row 1 is one row down, and so on
+	// Build row-major cell list
 	vector<pair<int,int>> cells;
-	for (int y =0; y <HeightMapMax; ++y){
-		for(int x=0; x< WidthMAPMAX; ++x){
-			cells.emplace_back(x,y);
+	for (int y = 0; y < HeightMapMax; ++y)
+		for (int x = 0; x < WidthMAPMAX; ++x)
+			cells.emplace_back(x, y);
+
+	// Place locations and paired foes
+	int locIdx = 0, foeIdx = 0;
+	int lastLocX = 0, lastLocY = 0;
+	for (auto &[x, y] : cells) {
+		if (locIdx < (int)locVec.size()) {
+			Foe f = (foeIdx < (int)foeVec.size()) ? foeVec[foeIdx++] : Foe();
+			gameMap[x][y] = MAP(f, foeIdx, locVec[locIdx++]);
+			lastLocX = x; lastLocY = y;
 		}
 	}
 
-	//place locations and foes into map cells
-	int exitCol= WidthMAPMAX /2;
-	int exitRow = HeightMapMax -1;
-	int locIdx=0, foeIdx =0;
-	for (auto &[x,y]: cells){
-       if (x == exitCol && y == exitRow) continue; // reserve for exit
-        if (locIdx < (int)locVec.size()) {
-            Foe f = (foeIdx < (int)foeVec.size()) ? foeVec[foeIdx++] : Foe();
-            gameMap[x][y] = MAP(f, foeIdx, locVec[locIdx++]);
-        }		
+	// Place exit in the first blank cell immediately after the last loc —
+	// guaranteeing it is always adjacent and reachable.
+	bool exitPlaced = false, passedLast = false;
+	for (auto &[x, y] : cells) {
+		if (passedLast && gameMap[x][y].getBlank()) {
+			gameMap[x][y].setIsExit();
+			exitPlaced = true;
+			break;
+		}
+		if (x == lastLocX && y == lastLocY) passedLast = true;
 	}
-
-	//locates where the exit hex is, and activates it
-	gameMap[exitCol][exitRow].setIsExit();
-
+	if (!exitPlaced) gameMap[lastLocX][lastLocY].setIsExit(); // fallback: whole map filled
 }
 
 void startGame::mapPrint() {
+    cout << "  Legend: P=you  X=exit  #=unvisited  v=visited  .=empty\n";
     for (int y = 0; y < HeightMapMax; ++y) {
         for (int x = 0; x < WidthMAPMAX; ++x) {
-            // odd columns get a leading half-space for hex stagger
             string prefix = (x % 2 == 1) ? " " : "";
             char cell;
             if      (gameMap[x][y].getIsCurLoc()) cell = 'P';
-            else if (gameMap[x][y].getIsExit())   cell = 'X'; // exit marker
+            else if (gameMap[x][y].getIsExit())   cell = 'X';
             else if (gameMap[x][y].getBlank())    cell = '.';
-            else                                  cell = '#';
+            else {
+                loc* lp = gameMap[x][y].getLocObj();
+                cell = (lp && lp->getExplored()) ? 'v' : '#';
+            }
             cout << prefix << cell << " ";
         }
         cout << '\n';
@@ -304,7 +325,7 @@ void startGame::mapPrint() {
 }
 
 void startGame::mainMenu(){
-	cout << "Welcome to the main menu. Enter commands: m=map, i=info, o=outside, t=test loc, q=quit" << endl;
+	cout << "\nCommands: (m)ap  (i)nfo  (xp) level up  (q)uit\nMove: n  s  nw  ne  sw  se\n";
 	string cmd;
 	while (player.getHp()>0) {
 		cout << "main> ";
@@ -332,13 +353,14 @@ void startGame::mainMenu(){
 				if(answer=="y") player.levelUp();
 			}
 		}
-		else if (cmd == "n" || cmd == "s" || cmd == "e" || cmd == "w" || cmd == "nw" || cmd == "ne" || cmd == "sw" || cmd == "se"){
+		else if (cmd == "n" || cmd == "s" || cmd == "nw" || cmd == "ne" || cmd == "sw" || cmd == "se"){
 			if(!movePlayer(cmd)) cout << "You cannot move that way." << endl;
 		}
-		else { cout << "Unknown command. Valid: m i o t xp q n s e w nw ne sw se" << endl; }
+		else { cout << "Unknown command. Valid: m i xp q  |  move: n s nw ne sw se" << endl; }
 	}
-	//the player is now dead. 
-	cout<<"The world continues to rotate. Only, now it does so without you"; return;
+	// Print death message only if player actually died; a clean 'q' just returns.
+	if (player.getHp() <= 0)
+		cout << "The world continues to rotate. Only, now it does so without you.\n";
 }
 
 void startGame::setCurLocation(int x, int y){
@@ -373,31 +395,71 @@ bool startGame::movePlayer(const string &dir) {
         return true;
     }
 
+    // ── Step 1: foe check ────────────────────────────────────────────────
+    // If there is a living foe on this cell, the player must deal with it
+    // before they can explore the location.
+    if (gameMap[nx][ny].getFoe()) {
+        Foe &cellFoe = gameMap[nx][ny].getFoeObj();
+        if (cellFoe.getAlive()) {
+            cout << "\n--- You are blocked by a foe! ---\n";
+            Foe tmp = cellFoe; // printIntro takes by value
+            tmp.printIntro(cellFoe);
+            if (!uniqueSelector(cellFoe)) {
+                startCombat(cellFoe);
+            }
+            // If the player died during combat, stop here.
+            if (player.getHp() <= 0) return true;
+            // If the foe survived (player fled), also stop — can't access the location yet.
+            if (cellFoe.getAlive()) {
+                cout << "You back away; the path is still blocked.\n";
+                return true;
+            }
+        }
+    }
+
+    // ── Step 2: explored check ───────────────────────────────────────────
+    // Foe is gone (or never existed). Now check whether the location has
+    // already been visited.
     if (gameMap[nx][ny].getLoc()) {
         loc* lp = gameMap[nx][ny].getLocObj();
-        if (lp) takeAction(*lp, player);
+        if (lp) {
+            if (lp->getExplored()) {
+                cout << "You've already been through here — nothing new catches your eye.\n";
+                // Return to main menu naturally (just fall through).
+            } else {
+                // ── Step 3: new location ─────────────────────────────────
+                takeAction(*lp, player);
+                lp->setExplored();
+            }
+        }
     }
     return true;
 }
 
 void startGame::advanceZone(){
-	//I need a way to detect if an incorrect curMapZone exists, or if the function is being called in bad places in my code
+	// curMapZone starts at 0 (nothing loaded yet — zone-1 is pre-loaded in the constructor).
+	// The first time the player hits an exit we move to zone 2, etc.
 	curMapZone++;
 	switch(curMapZone){
 		case 2:
+			cout << "As you press deeper into the city proper the air grows stale, and the sounds of the wind and birds outside start to fade, and the buzz of electricity can be faintly heard.\n";
 			fillInMap(mapList2, foeV2, 2);
 			break;
 		case 3:
+			cout << "The air here is filled with ozone and the reak of a battlefield.\n";
 			fillInMap(mapList3, foeV3, 3);
 			break;
 		case 4:
+			cout << "Power thrums in the air, your mind races being in such close proximity to the physical manifestation of a cities' sprit.\n";
 			fillInMap(mapList4, foeV4, 4);
 			break;
 		default:
 			lastFloor();
-			break;
+			return; // lastFloor handles its own flow
 	}
-	setCurLocation(WidthMAPMAX/2,0);
+	// Always drop the player at the top-left corner of the new zone map
+	setCurLocation(0, 0);
+	cout << "You take stock of your new surroundings.\n";
 }
 
 // Returns the hex neighbor of (col, row) in direction dir.
@@ -538,47 +600,33 @@ void startGame::takeAction(loc place, Player &you, bool showLocationText){
 	}
 	int options = place.getOptions();
 	if (options <= 0) { cout << "Nothing to do here." << endl; return; }
-	if (showLocationText) cout << "Options:" << endl;
+	// Always show options — on a retry the player needs to see them again
 	if (options >= 1) cout << "1) " << place.getOp1() << endl;
 	if (options >= 2) cout << "2) " << place.getOp2() << endl;
 	if (options >= 3) cout << "3) " << place.getOp3() << endl;
 	cout << "Choose option (1-" << options << "): ";
 	int choice = 0;
-	// Read user choice with getline and parse to avoid leaving cin in fail state
 	string choiceLine;
 	while (true) {
-		if(!std::getline(cin, choiceLine)){
-			// EOF or input error: default to option 1
-			choice = 1;
-			break;
-		}
-		// trim leading whitespace
-		size_t p = 0; while (p < choiceLine.size() && isspace((unsigned char)choiceLine[p])) ++p;
-		if (p == choiceLine.size()) { cout << "Invalid, re-enter: "; continue; }
-		try {
-			choice = stoi(choiceLine.substr(p));
-		} catch (...) {
-			cout << "Invalid, re-enter: ";
-			continue;
-		}
+		if (!std::getline(cin, choiceLine)) { choice = 1; break; } // EOF default
+		// Silently skip blank / whitespace-only lines (stray newlines between prompts)
+		size_t p = 0;
+		while (p < choiceLine.size() && isspace((unsigned char)choiceLine[p])) ++p;
+		if (p == choiceLine.size()) continue; // blank line — just wait
+		try { choice = stoi(choiceLine.substr(p)); }
+		catch (...) { cout << "Please enter a number (1-" << options << "): "; continue; }
 		if (choice >= 1 && choice <= options) break;
-		cout << "Invalid, re-enter: ";
+		cout << "Please enter 1";
+		if (options > 1) cout << "-" << options;
+		cout << ": ";
 	}
 
 
-	//implimenting rewards now
-	//pop = passed, fop = failed
 	string pop, fop;
-
 	string stat; int need = 0; string passMsg, failMsg;
 	if (choice == 1) { stat = place.getOp1Stat(); need = place.getOp1StatNum(); passMsg = place.getOp1pass(); failMsg = place.getOp1fail(); pop=place.getPop1(); fop=place.getFop1();}
 	else if (choice == 2) { stat = place.getOp2Stat(); need = place.getOp2StatNum(); passMsg = place.getOp2pass(); failMsg = place.getOp2fail(); pop=place.getPop2(); fop=place.getFop2();}
 	else { stat = place.getOp3Stat(); need = place.getOp3StatNum(); passMsg = place.getOp3pass(); failMsg = place.getOp3fail(); pop=place.getPop3(); fop=place.getFop3();}
-	// this was for debugging int xpBefore = you.getXp();
-
-	//implimenting rewards now
-	//pop = passed, fop = failed
-	string pop, fop;
 	
 
 
@@ -723,7 +771,9 @@ void startGame::runShop(const string &merchantName, const string &greeting,
 // and field medicine to anyone passing through.
 void startGame::merchantMeat(Player &you) {
 	runShop(
-		"",
+		"placeholder name",
+		"Placeholder greeting",
+		"Placeholder exit text",
 		stockMeat, you
 	);
 }
@@ -733,7 +783,9 @@ void startGame::merchantMeat(Player &you) {
 // from the outer sections and now trades them for travel goods.
 void startGame::merchantZ1(Player &you) {
 	runShop(
-		"",
+		"The Salvager",
+		"'Found some useful gear in the outer sections. Make it worth my while.'",
+		"'Watch your back in there.'",
 		stockZ1, you
 	);
 }
@@ -743,7 +795,9 @@ void startGame::merchantZ1(Player &you) {
 // He carries rare ammunition, grenades, and armour stripped from inner defenders.
 void startGame::merchantZ2(Player &you) {
 	runShop(
-		"",
+		"placeholder name",
+		"Placeholder greeting",
+		"Placeholder exit text",
 		stockZ2, you
 	);
 }
@@ -753,7 +807,9 @@ void startGame::merchantZ2(Player &you) {
 // Add items to stockZ3 in the constructor and replace this greeting when ready.
 void startGame::merchantZ3(Player &you) {
 	runShop(
-		"",
+		"placeholder name",
+		"Placeholder greeting",
+		"Placeholder exit text",
 		stockZ3, you
 	);
 }
@@ -838,12 +894,25 @@ void startGame::startCombat(Foe &foe){
 		if(this->player.getHasBullet()>0 && this->player.getHasWeapon1()){cout<<"fire (r)ifle, ";}
 		
 		cout << "(u)se item: ";
+		// Read combat action — skip blank/whitespace-only lines silently
 		string actionLine;
-		char action = 'a';
-		if (std::getline(cin, actionLine) && !actionLine.empty())
-			action = tolower((unsigned char)actionLine[0]);
+		char action = 0;
+		while (action == 0) {
+			if (!std::getline(cin, actionLine)) { action = 'f'; break; } // EOF -> flee
+			size_t p = 0;
+			while (p < actionLine.size() && isspace((unsigned char)actionLine[p])) ++p;
+			if (p < actionLine.size())
+				action = tolower((unsigned char)actionLine[p]);
+		}
 		int result = this->player.checkInputCombat(action, foe);
-		if (result == 0) { cout << "Unknown action." << endl; continue; }
+		if (result == 0) {
+			cout << "Unknown action. Choose: (a)ttack (f)lee (u)se";
+			if (this->player.getJavelin()>0) cout << " (j)avelin";
+			if (this->player.getHasGrenade()) cout << " (g)renade";
+			if (this->player.getHasBullet()>0 && this->player.getHasWeapon1()) cout << " (r)ifle";
+			cout << "\n";
+			continue;
+		}
 		if (result == 2) { cout << "You fled the combat." << endl; return; }
 		if (result == 3) { cout << "Foe defeated!" << endl;  break; }
 

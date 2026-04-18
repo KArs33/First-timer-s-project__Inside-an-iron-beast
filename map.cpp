@@ -1,4 +1,3 @@
-
 #include "map.h"
 #include <iostream>
 
@@ -20,3 +19,4 @@ void MAP::setIsCurLoc(bool val){ isCurLoc = val; }
 bool MAP::checkCurLocFoe(){ if (isCurLoc && mapFoe) { if (thisFoeObj.getAlive()) return true; } return false; }
 
 loc* MAP::getLocObj(){ return thisLoc; }
+Foe& MAP::getFoeObj(){ return thisFoeObj; }
