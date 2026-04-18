@@ -308,8 +308,9 @@ void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int /*curMapZ
 void startGame::mapPrint() {
     cout << "  Legend: P=you  X=exit  #=unvisited  v=visited  .=empty\n";
     for (int y = 0; y < HeightMapMax; ++y) {
+        // Odd rows are indented to create the hex stagger
+        if (y % 2 == 1) cout << " ";
         for (int x = 0; x < WidthMAPMAX; ++x) {
-            string prefix = (x % 2 == 1) ? " " : "";
             char cell;
             if      (gameMap[x][y].getIsCurLoc()) cell = 'P';
             else if (gameMap[x][y].getIsExit())   cell = 'X';
@@ -318,7 +319,7 @@ void startGame::mapPrint() {
                 loc* lp = gameMap[x][y].getLocObj();
                 cell = (lp && lp->getExplored()) ? 'v' : '#';
             }
-            cout << prefix << cell << " ";
+            cout << cell << " ";
         }
         cout << '\n';
     }
@@ -466,18 +467,15 @@ void startGame::advanceZone(){
 // Uses even-column offset (col%2==0 shifts up, odd shifts down).
 // Directions: "n","s","nw","ne","sw","se"
 pair<int,int> startGame::hexNeighbor(int col, int row, const string &dir) {
-    // even col: upper diagonals shift left/right at same row-1
-    // odd col:  upper diagonals shift left/right at row (same row for upper)
-    int isOdd = col % 2; // 1 if odd column
-    if (dir == "n")  return {col,      row - 1};
-    if (dir == "s")  return {col,      row + 1};
-    if (dir == "nw") return {col - 1,  isOdd ? row     : row - 1};
-    if (dir == "ne") return {col + 1,  isOdd ? row     : row - 1};
-    if (dir == "sw") return {col - 1,  isOdd ? row + 1 : row    };
-    if (dir == "se") return {col + 1,  isOdd ? row + 1 : row    };
-    return {-1, -1}; // invalid direction
+    int isOdd = row % 2; // 1 if odd row (those rows are indented right)
+    if (dir == "n")  return {col,                row - 1};
+    if (dir == "s")  return {col,                row + 1};
+    if (dir == "nw") return {col - 1 + isOdd,    row - 1};
+    if (dir == "ne") return {col     + isOdd,     row - 1};
+    if (dir == "sw") return {col - 1 + isOdd,    row + 1};
+    if (dir == "se") return {col     + isOdd,     row + 1};
+    return {-1, -1};
 }
-
 
 void startGame::applyRewardCodes(const string &codes, Player &you){
 	if (codes.empty() || codes == "NULL") return;
