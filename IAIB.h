@@ -45,6 +45,9 @@ public:
 	};
 	
 	static const int WidthMAPMAX = 3*2; static const int HeightMapMax=5; //used for the dimensions of the map AS VECTORS	, plz don't change
+	// Maximum number of locations placed on the map per zone (excluding exit cell).
+	// Zone 1 = 15, Zone 2 = 12, Zone 3 = 9.
+	static const int ZONE_LOC_CAP[5]; // indexed 0-4; 0 unused
 	//const int WNUMCELL = WidthMAPMAX+2; const int HNUMCELL=HeightMapMax; OUPS, IGNORE THIS
 	int curMapZone =0; //this is incriminated each time we move to a new map zone
 	vector<loc*> mapList0, mapList1, mapList2, mapList3, mapList4;

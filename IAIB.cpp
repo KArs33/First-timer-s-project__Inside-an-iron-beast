@@ -13,6 +13,9 @@
 
 using namespace std;
 
+// Zone location caps: zone1=15, zone2=12, zone3=9, zone4=unlimited (use INT_MAX)
+const int startGame::ZONE_LOC_CAP[5] = { 0, 15, 12, 9, 999 };
+
 static string fixEscapedQuotes(const string &s) { return s; }
 
 // Strip trailing \r from strings parsed from Windows-format (CRLF) text files.
@@ -267,7 +270,10 @@ void startGame::buildFoeList(){
 	}
 }
 
-void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int /*curMapZone*/){
+void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int zoneNum){
+	// Enforce per-zone location cap
+	int cap = (zoneNum >= 0 && zoneNum <= 4) ? ZONE_LOC_CAP[zoneNum] : 999;
+	if ((int)locVec.size() > cap) locVec.resize(cap);
 
 	// Clear the map
 	for (int x = 0; x < WidthMAPMAX; ++x)
