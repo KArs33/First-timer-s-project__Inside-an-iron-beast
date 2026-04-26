@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
-    std::cout<<"Starting IAIB — loading files: "<< argv[1] <<" and "<<argv[2]<<"\n";
+    std::cout<<"Starting IAIB -- loading files: "<< argv[1] <<" and "<<argv[2]<<"\n";
     srand(time(NULL));
     // startGame expects (foeFile, locFile) — pass argv[2] (foe) first and argv[1] (loc) second
     startGame(string(argv[2]), string(argv[1]));

@@ -121,7 +121,7 @@ void startGame::runPrologue(){
 			continue;
 		}
 		cout << "\n[Prologue " << (i + 1) << "]\n";
-		cout << "Player stats — Bd:" << player.getStatBd() << " Ag:" << player.getStatAg()
+		cout << "Player stats -- Bd:" << player.getStatBd() << " Ag:" << player.getStatAg()
 		     << " In:" << player.getStatIn() << " Gu:" << player.getStatGu() << "\n";
 
 		bool showLocationText = true;
