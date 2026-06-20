@@ -44,9 +44,10 @@ public:
 		for(int i =0; i<foeV3.size();i++)delete foeV3[i]; */
 	};
 	
-	static const int WidthMAPMAX = 3*2; static const int HeightMapMax=5; //used for the dimensions of the map AS VECTORS	, plz don't change
-	// Maximum number of locations placed on the map per zone (excluding exit cell).
-	// Zone 1 = 15, Zone 2 = 12, Zone 3 = 9.
+	static const int WidthMAPMAX = 3; static const int HeightMapMax=5; // simple 2D grid: 3 columns x 5 rows. (0,0) is the top-left start, (WidthMAPMAX-1,HeightMapMax-1) is the bottom-right exit.
+	// Maximum number of locations placed on the map per zone (excluding the start and exit cells).
+	// Zone 1 = 15, Zone 2 = 12, Zone 3 = 9. Also implicitly capped by available grid cells
+	// (WidthMAPMAX*HeightMapMax - 2, since the start and exit cells hold no location).
 	static const int ZONE_LOC_CAP[5]; // indexed 0-4; 0 unused
 	//const int WNUMCELL = WidthMAPMAX+2; const int HNUMCELL=HeightMapMax; OUPS, IGNORE THIS
 	int curMapZone =0; //this is incriminated each time we move to a new map zone
@@ -126,10 +127,10 @@ void wireTrap(Foe &foe);
 void startCombat(Foe &foe);
 void printTutorial();
 void advanceZone();
-pair<int,int> hexNeighbor(int, int, const string&);
+pair<int,int> neighbor(int, int, const string&);
 
 
-vector<string> mainMenuVec={"n","s","nw","sw","ne","se","m","xp","i"};
+vector<string> mainMenuVec={"n","s","e","w","m","xp","i"};
 
 	// Merchant stock vectors — kept here so stock persists across re-visits.
 	// Populated in the startGame constructor.

@@ -137,20 +137,12 @@ void startGame::runPrologue(){
 		}
 	}
 
-	// Place the player at the map cell holding the first zone-1 location (start of main game)
+	// Place the player at the fixed start cell, top-left of the grid (0,0).
 	if (!mapList1.empty()) {
-		string firstName = mapList1[0]->getName();
-		for (int x = 0; x < WidthMAPMAX; ++x) {
-			for (int y = 0; y < HeightMapMax; ++y) {
-				loc* lp = gameMap[x][y].getLocObj();
-				if (lp && lp->getName() == firstName) {
-					setCurLocation(x, y);
-					cout << "Placed player at '" << firstName << "' (" << x << "," << y << ").\n";
-					mainMenu();
-					return;
-				}
-			}
-		}
+		setCurLocation(0, 0);
+		cout << "Placed player at the start of the city (0,0).\n";
+		mainMenu();
+		return;
 	}
 	// Fallback: put the player at (0,0)
 	cout<<"ERROR, runPrologue() error" <<endl;
@@ -271,8 +263,12 @@ void startGame::buildFoeList(){
 }
 
 void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int zoneNum){
-	// Enforce per-zone location cap
+	// Enforce per-zone location cap. Also bounded by available grid cells:
+	// the start cell (0,0) and the exit cell (bottom-right corner) are always
+	// reserved and never hold a location.
+	int availableCells = WidthMAPMAX * HeightMapMax - 2;
 	int cap = (zoneNum >= 0 && zoneNum <= 4) ? ZONE_LOC_CAP[zoneNum] : 999;
+	if (cap > availableCells) cap = availableCells;
 	if ((int)locVec.size() > cap) locVec.resize(cap);
 
 	// Clear the map
@@ -280,42 +276,33 @@ void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int zoneNum){
 		for (int y = 0; y < HeightMapMax; ++y)
 			gameMap[x][y] = MAP();
 
-	// Build row-major cell list
+	int exitX = WidthMAPMAX - 1, exitY = HeightMapMax - 1;
+
+	// Build row-major cell list, skipping the reserved start cell (0,0) and
+	// the reserved exit cell (bottom-right corner).
 	vector<pair<int,int>> cells;
 	for (int y = 0; y < HeightMapMax; ++y)
-		for (int x = 0; x < WidthMAPMAX; ++x)
+		for (int x = 0; x < WidthMAPMAX; ++x) {
+			if (x == 0 && y == 0) continue;          // start cell — stays blank
+			if (x == exitX && y == exitY) continue;  // exit cell — holds no location
 			cells.emplace_back(x, y);
+		}
 
-	// Place locations and paired foes
+	// Place locations and paired foes into the remaining cells.
 	int locIdx = 0, foeIdx = 0;
-	int lastLocX = 0, lastLocY = 0;
 	for (auto &[x, y] : cells) {
-		if (locIdx < (int)locVec.size()) {
-			Foe f = (foeIdx < (int)foeVec.size()) ? foeVec[foeIdx++] : Foe();
-			gameMap[x][y] = MAP(f, foeIdx, locVec[locIdx++]);
-			lastLocX = x; lastLocY = y;
-		}
+		if (locIdx >= (int)locVec.size()) break;
+		Foe f = (foeIdx < (int)foeVec.size()) ? foeVec[foeIdx++] : Foe();
+		gameMap[x][y] = MAP(f, foeIdx, locVec[locIdx++]);
 	}
 
-	// Place exit in the first blank cell immediately after the last loc —
-	// guaranteeing it is always adjacent and reachable.
-	bool exitPlaced = false, passedLast = false;
-	for (auto &[x, y] : cells) {
-		if (passedLast && gameMap[x][y].getBlank()) {
-			gameMap[x][y].setIsExit();
-			exitPlaced = true;
-			break;
-		}
-		if (x == lastLocX && y == lastLocY) passedLast = true;
-	}
-	if (!exitPlaced) gameMap[lastLocX][lastLocY].setIsExit(); // fallback: whole map filled
+	// Exit is always the bottom-right corner of the grid.
+	gameMap[exitX][exitY].setIsExit();
 }
 
 void startGame::mapPrint() {
     cout << "  Legend: P=you  X=exit  #=unvisited  v=visited  .=empty\n";
     for (int y = 0; y < HeightMapMax; ++y) {
-        // Odd rows are indented to create the hex stagger
-        if (y % 2 == 1) cout << " ";
         for (int x = 0; x < WidthMAPMAX; ++x) {
             char cell;
             if      (gameMap[x][y].getIsCurLoc()) cell = 'P';
@@ -332,7 +319,7 @@ void startGame::mapPrint() {
 }
 
 void startGame::mainMenu(){
-	cout << "\nCommands: (m)ap  (i)nfo  (xp) level up  (q)uit\nMove: n  s  nw  ne  sw  se\n";
+	cout << "\nCommands: (m)ap  (i)nfo  (xp) level up  (q)uit\nMove: n  s  e  w\n";
 	string cmd;
 	while (player.getHp()>0) {
 		cout << "main> ";
@@ -360,10 +347,10 @@ void startGame::mainMenu(){
 				if(answer=="y") player.levelUp();
 			}
 		}
-		else if (cmd == "n" || cmd == "s" || cmd == "nw" || cmd == "ne" || cmd == "sw" || cmd == "se"){
+		else if (cmd == "n" || cmd == "s" || cmd == "e" || cmd == "w"){
 			if(!movePlayer(cmd)) cout << "You cannot move that way." << endl;
 		}
-		else { cout << "Unknown command. Valid: m i xp q  |  move: n s nw ne sw se" << endl; }
+		else { cout << "Unknown command. Valid: m i xp q  |  move: n s e w" << endl; }
 	}
 	// Print death message only if player actually died; a clean 'q' just returns.
 	if (player.getHp() <= 0)
@@ -389,7 +376,7 @@ bool startGame::findCurLocation(int &outX, int &outY){
 bool startGame::movePlayer(const string &dir) {
     int x, y;
     if (!findCurLocation(x, y)) return false;
-    auto [nx, ny] = hexNeighbor(x, y, dir); 
+    auto [nx, ny] = neighbor(x, y, dir); 
     if (nx < 0 || ny < 0 || nx >= WidthMAPMAX || ny >= HeightMapMax) return false;
     if (gameMap[nx][ny].getBlank()) return false;
 
@@ -476,17 +463,13 @@ void startGame::advanceZone(){
 	cout << "You take stock of your new surroundings.\n";
 }
 
-// Returns the hex neighbor of (col, row) in direction dir.
-// Uses even-column offset (col%2==0 shifts up, odd shifts down).
-// Directions: "n","s","nw","ne","sw","se"
-pair<int,int> startGame::hexNeighbor(int col, int row, const string &dir) {
-    int isOdd = row % 2; // 1 if odd row (those rows are indented right)
-    if (dir == "n")  return {col,                row - 1};
-    if (dir == "s")  return {col,                row + 1};
-    if (dir == "nw") return {col - 1 + isOdd,    row - 1};
-    if (dir == "ne") return {col     + isOdd,     row - 1};
-    if (dir == "sw") return {col - 1 + isOdd,    row + 1};
-    if (dir == "se") return {col     + isOdd,     row + 1};
+// Returns the neighboring cell of (col, row) in a simple 2D grid.
+// Directions: "n" (up), "s" (down), "e" (right), "w" (left).
+pair<int,int> startGame::neighbor(int col, int row, const string &dir) {
+    if (dir == "n") return {col,     row - 1};
+    if (dir == "s") return {col,     row + 1};
+    if (dir == "e") return {col + 1, row};
+    if (dir == "w") return {col - 1, row};
     return {-1, -1};
 }
 
