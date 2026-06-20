@@ -75,7 +75,10 @@ void buildFoeList();
 //void placeFoes(vector<foe> foeV3, vector<foe> foeV2, vector<foe> foeV1); //used to read the foe.txt file, organize the foes into 3 vectors, and insert them into the map
 
 //this function gets called when the player must make a choice at a location
-void takeAction(loc place, Player &you, bool showLocationText = true);
+// returns true if the player chose to run away from the encounter (no roll made,
+// no reward/penalty applied beyond the food cost); false if the encounter was
+// resolved normally (pass or fail).
+bool takeAction(loc place, Player &you, bool showLocationText = true, bool allowFlee = true);
 
 //outputs a number using makeRoll
 static int makeRolls(string stat, int mod, Player you);

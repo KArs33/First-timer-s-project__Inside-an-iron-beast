@@ -127,7 +127,7 @@ void startGame::runPrologue(){
 		bool showLocationText = true;
 		while (true) {
 			int xpBefore = player.getXp();
-			takeAction(cur, player, showLocationText);
+			takeAction(cur, player, showLocationText, /*allowFlee=*/false);
 			if (player.getXp() > xpBefore) {
 				cout << "[Prologue] Passed '" << cur.getName() << "'.\n";
 				break;
@@ -435,8 +435,15 @@ bool startGame::movePlayer(const string &dir) {
                 // Return to main menu naturally (just fall through).
             } else {
                 // ── Step 3: new location ─────────────────────────────────
-                takeAction(*lp, player);
-                lp->setExplored();
+                bool ranAway = takeAction(*lp, player);
+                if (ranAway) {
+                    // Player declined the encounter: fall back to the tile they
+                    // came from and leave this location unexplored so it can
+                    // still be attempted later.
+                    setCurLocation(x, y);
+                } else {
+                    lp->setExplored();
+                }
             }
         }
     }
@@ -598,17 +605,20 @@ void startGame::applyRewardCodes(const string &codes, Player &you){
 }
 
 
-void startGame::takeAction(loc place, Player &you, bool showLocationText){
+bool startGame::takeAction(loc place, Player &you, bool showLocationText, bool allowFlee){
 	if (showLocationText) {
 		cout << "Location: " << place.getName() << "\n" << place.getDescription() << endl;
 	}
 	int options = place.getOptions();
-	if (options <= 0) { cout << "Nothing to do here." << endl; return; }
+	if (options <= 0) { cout << "Nothing to do here." << endl; return false; }
 	// Always show options — on a retry the player needs to see them again
 	if (options >= 1) cout << "1) " << place.getOp1() << endl;
 	if (options >= 2) cout << "2) " << place.getOp2() << endl;
 	if (options >= 3) cout << "3) " << place.getOp3() << endl;
-	cout << "Choose option (1-" << options << "): ";
+	if (allowFlee)
+		cout << "Choose option (1-" << options << ", or 'r' to run away): ";
+	else
+		cout << "Choose option (1-" << options << "): ";
 	int choice = 0;
 	string choiceLine;
 	while (true) {
@@ -617,11 +627,26 @@ void startGame::takeAction(loc place, Player &you, bool showLocationText){
 		size_t p = 0;
 		while (p < choiceLine.size() && isspace((unsigned char)choiceLine[p])) ++p;
 		if (p == choiceLine.size()) continue; // blank line — just wait
-		try { choice = stoi(choiceLine.substr(p)); }
-		catch (...) { cout << "Please enter a number (1-" << options << "): "; continue; }
+		string trimmed = choiceLine.substr(p);
+
+		if (allowFlee && (trimmed[0] == 'r' || trimmed[0] == 'R')) {
+			cout << "You decide it isn't worth the risk and slip back the way you came.\n";
+			you.setFood(you.getFood() - BASEFOODCOST);
+			cout << "Food -" << BASEFOODCOST << ". (Now: " << you.getFood() << ")\n";
+			return true; // ran away — caller should not mark the location explored
+		}
+
+		try { choice = stoi(trimmed); }
+		catch (...) {
+			cout << "Please enter a number (1-" << options << ")";
+			if (allowFlee) cout << ", or 'r' to run away";
+			cout << ": ";
+			continue;
+		}
 		if (choice >= 1 && choice <= options) break;
 		cout << "Please enter 1";
 		if (options > 1) cout << "-" << options;
+		if (allowFlee) cout << ", or 'r' to run away";
 		cout << ": ";
 	}
 
@@ -646,6 +671,7 @@ void startGame::takeAction(loc place, Player &you, bool showLocationText){
 		you.setHp(you.getHp() - 2);
 		applyRewardCodes(fop, you);
 	}
+	return false; // encounter resolved normally
 }
 
 int startGame::makeRolls(string stat, int mod, Player you){
