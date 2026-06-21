@@ -7,7 +7,6 @@ The project will be coded in c++, with an excel sheet to hold the data that will
 
 The project was created in January of 2025 by Kevin Arsenault as a solo project. No one else may claim ownership over the project but I intend to allow others play and distribute the game for free so long as they offer proper citation when distributing.
 Fans may modify the game, and claim ownership over those modifications if they wish. So long as I am credited for the work I did. 
-No one may upload to, and no AI may take information from, my project in any form.
 
 
 Format for foe.txt

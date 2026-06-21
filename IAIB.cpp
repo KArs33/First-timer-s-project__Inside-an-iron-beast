@@ -298,6 +298,9 @@ void startGame::fillInMap(vector<loc*> locVec, vector<Foe> foeVec, int zoneNum){
 
 	// Exit is always the bottom-right corner of the grid.
 	gameMap[exitX][exitY].setIsExit();
+	// Start is always the top-left corner of the grid — mark it passable
+	// even though it holds no location, so the player can walk back onto it.
+	gameMap[0][0].setIsStart();
 }
 
 void startGame::mapPrint() {
@@ -307,6 +310,7 @@ void startGame::mapPrint() {
             char cell;
             if      (gameMap[x][y].getIsCurLoc()) cell = 'P';
             else if (gameMap[x][y].getIsExit())   cell = 'X';
+            else if (gameMap[x][y].getIsStart())  cell = '.';
             else if (gameMap[x][y].getBlank())    cell = '.';
             else {
                 loc* lp = gameMap[x][y].getLocObj();

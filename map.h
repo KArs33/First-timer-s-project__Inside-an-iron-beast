@@ -19,6 +19,8 @@ public:
 
 	void setIsExit();
 	bool getIsExit();
+	void setIsStart();
+	bool getIsStart();
 	void setFoe();
 	void setFoeID(int num);
 	int getFoeID();
@@ -46,6 +48,7 @@ private:
 	bool isCurLoc =0;
 	loc* thisLoc = nullptr;
 	bool isExit = false;
+	bool isStart = false;
 };
 
 #endif
