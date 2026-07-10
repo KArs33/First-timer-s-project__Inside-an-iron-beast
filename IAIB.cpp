@@ -552,6 +552,12 @@ void startGame::applyRewardCodes(const string &codes, Player &you){
 					cout << "Shield relic charges " << (amount >= 0 ? "+" : "") << amount << ".\n";
 				}
 				break;
+			case 'F':
+				{
+					you.setFuel(max(0, you.getFuel()+ amount));
+					cout << (amount >=0 ? "You find " : "You use ")
+						<< abs(amount) << " fuel. (Now: " << you.getFuel() << ")\n";
+				}break;
 			// ── stats ───────────────────────────────────────────────────
 			case 'A':
 				you.setStatAg(you.getStatAg() + amount);
@@ -574,7 +580,17 @@ void startGame::applyRewardCodes(const string &codes, Player &you){
 				     << ". (Now: " << you.getStatIn() << ")\n";
 				break;
 			// ── toggles / flags ─────────────────────────────────────────
-			case 'P': case 'p':
+			case 'a':{
+				you.setHasAmulet();
+				cout<<"You have picked up the priest's amulet!\n";
+			}break;
+			case 'c':{
+				you.setHasCipher();
+				cout<<"You've found a strange cipher!\n";
+			}break;
+
+				
+			case 'P': 
 				if (amount > 0) {
 					you.setHasPet();
 					cout << "You have gained a companion!\n";
