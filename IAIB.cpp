@@ -552,6 +552,11 @@ void startGame::applyRewardCodes(const string &codes, Player &you){
 					cout << "Shield relic charges " << (amount >= 0 ? "+" : "") << amount << ".\n";
 				}
 				break;
+			case 'o':{
+				you.setOrb(max(0, you.getOrb() + amount));
+				cout << (amount >=0? "You find " : "You use ")
+					<< abs(amount) << "spirit cleansing orbs. (Now: " << you.getOrb()<< ")\n";
+			}break;
 			case 'F':
 				{
 					you.setFuel(max(0, you.getFuel()+ amount));
@@ -579,6 +584,15 @@ void startGame::applyRewardCodes(const string &codes, Player &you){
 				cout << "Intelligence " << (amount >= 0 ? "+" : "") << amount
 				     << ". (Now: " << you.getStatIn() << ")\n";
 				break;
+			// __ weapons ________________________________	
+			case 'r':{
+				you.getHasWeapon1();
+				cout<<"You equip the rifle (uses agility for attacks)\n";
+			}break;
+			case 'S':{
+				you.getHasWeapon2();
+				cout<<"You equip the officer's sword and discard your battered gladius!\n";
+			}break;
 			// ── toggles / flags ─────────────────────────────────────────
 			case 'a':{
 				you.setHasAmulet();
@@ -588,8 +602,35 @@ void startGame::applyRewardCodes(const string &codes, Player &you){
 				you.setHasCipher();
 				cout<<"You've found a strange cipher!\n";
 			}break;
+			case 'g':{
+				you.setHasGasMask();
+				cout<<"You've found a gas mask!\n";
+			}break;
+			case 'k':{
+				you.setHasForgeKey();
+				cout<<"You've found a key to the forge!\n";
+			}break;
+			case 'K':{
+				you.setHasVaultKey();
+				cout<<"You've found a key to a vault!\n";
+			}break;
 
-				
+			case 'p':{
+				you.setHasPriestSecret();
+				cout<< "The priest's secret may have some use in the future.\n";
+			}break;
+			case 'R':{
+				you.setHasRing();
+				cout<<"You've picked up a signet ring!\n";
+			}break;
+			case 'T':{
+				you.setHasTool1();
+				cout<<"You've found some a tool kit!\n";
+			}break;
+			case 'u':{
+				you.setHasShell();
+				cout<<"You've found an explosive shell!\n";
+			}break;
 			case 'P': 
 				if (amount > 0) {
 					you.setHasPet();
